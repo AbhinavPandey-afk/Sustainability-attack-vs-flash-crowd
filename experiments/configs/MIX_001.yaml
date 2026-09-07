@@ -1,0 +1,43 @@
+# E3 — Flash Crowd + EDoS simultaneously (CLAUDE.md section 13).
+#
+# NOTE ON SCALE: duration_seconds here is short (proof-of-concept/CI-
+# friendly), not the multi-minute-to-hour durations CLAUDE.md's full
+# experiment protocol (sections 13, 25) calls for — see
+# docs/experiment_protocol.md.
+#
+# NOTE ON LABEL: label=1 (attack present) for the entire run. EDoS
+# traffic runs continuously alongside legitimate flash-crowd traffic for
+# the whole window — the ground-truth question this experiment answers
+# is "does the detector recognize attack presence amid simultaneous
+# legitimate load", not "which traffic type dominates". See
+# docs/experiment_protocol.md for the full rationale.
+#
+# This run is kept OUT of the main train/val/test split (written to
+# data/features/held_out/, not data/features/) — see
+# experiments/run_experiment.py's output_features_dir and
+# experiments/summarize_results.py's mixed/interleaved evaluation block.
+experiment:
+  name: MIX_001
+  label: 1
+  scenario_type: mixed
+  scenario_file: traffic/scenarios/mixed.yaml
+  duration_seconds: 75
+  seed: 42
+
+detector:
+  window_seconds: [20]
+  step_seconds: 20
+
+cost_model:
+  replica_cost_per_minute: 1.0
+  cpu_cost_weight: 0.0
+  memory_cost_weight: 0.0
+
+replica_sampler:
+  interval_seconds: 5
+  namespace: cascade
+  deployment: cascade-app
+  hpa: cascade-app
+
+prometheus:
+  base_url: http://localhost:9090

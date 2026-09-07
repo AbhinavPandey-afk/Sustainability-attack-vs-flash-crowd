@@ -1,0 +1,52 @@
+# The CASCADE test application (Phase 2's FastAPI app), deployed to the
+# local cluster. Image is loaded locally via `k3d image import` — there is
+# no external registry — hence imagePullPolicy: IfNotPresent.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cascade-app
+  namespace: cascade
+  labels:
+    app: cascade-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cascade-app
+  template:
+    metadata:
+      labels:
+        app: cascade-app
+      annotations:
+        # Consumed by Prometheus's kubernetes_sd_configs (role: pod) —
+        # see kubernetes/prometheus/config.yaml.
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: cascade-app
+          image: cascade-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          # Required for HPA's CPU-utilization target to be computable.
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10

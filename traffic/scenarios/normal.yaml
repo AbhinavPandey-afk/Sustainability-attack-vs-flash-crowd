@@ -1,0 +1,22 @@
+# E0 — normal baseline traffic (CLAUDE.md section 13).
+# Light, diverse browsing — used as the non-surge, non-attack comparison
+# point for later experiments.
+scenario:
+  name: normal
+  type: normal
+  description: "Light baseline traffic across diverse endpoints"
+
+locust:
+  users: 10
+  spawn_rate: 2
+  run_time_seconds: 60
+  host: "http://localhost:8000"
+
+behavior:
+  think_time_min: 1.0
+  think_time_max: 4.0
+  search_terms: ["laptop", "phone", "shoes", "book", "camera"]
+  weights:
+    home: 4
+    search: 4
+    checkout: 1

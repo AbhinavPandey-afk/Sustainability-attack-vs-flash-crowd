@@ -1,0 +1,17 @@
+# Internal-only (ClusterIP). Use `kubectl port-forward` to view the UI
+# locally — never exposed publicly by default.
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: cascade
+  labels:
+    app: prometheus
+spec:
+  type: ClusterIP
+  selector:
+    app: prometheus
+  ports:
+    - name: http
+      port: 9090
+      targetPort: 9090

@@ -1,0 +1,20 @@
+# Internal-only Service (ClusterIP) — intentionally not exposed outside the
+# cluster. Access is verified via kubectl port-forward or an in-cluster
+# client pod (see scripts/smoke-test.sh / smoke-test.ps1).
+apiVersion: v1
+kind: Service
+metadata:
+  name: smoke-test
+  namespace: cascade-test
+  labels:
+    app: smoke-test
+    app.kubernetes.io/part-of: cascade
+spec:
+  type: ClusterIP
+  selector:
+    app: smoke-test
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP

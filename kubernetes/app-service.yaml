@@ -1,0 +1,16 @@
+# Internal-only (ClusterIP) — not exposed outside the cluster by default.
+apiVersion: v1
+kind: Service
+metadata:
+  name: cascade-app
+  namespace: cascade
+  labels:
+    app: cascade-app
+spec:
+  type: ClusterIP
+  selector:
+    app: cascade-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000

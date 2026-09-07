@@ -1,0 +1,42 @@
+# E3 — Flash Crowd + EDoS simultaneously (CLAUDE.md section 13).
+# Both traffic classes run concurrently against the same app instance for
+# the whole window. Ground truth for the resulting experiment is
+# documented in docs/experiment_protocol.md: label=1 (attack present)
+# throughout, since EDoS traffic is present for the entire run — the
+# detector's job here is recognizing attack presence amid simultaneous
+# legitimate load, not which traffic type is larger.
+scenario:
+  name: mixed
+  type: mixed
+  description: "E3: legitimate flash-crowd and EDoS traffic simultaneously"
+
+locust:
+  # Sum of flash_crowd.users + edos.users below, so a single Locust run
+  # distributes exactly this many users across both User classes,
+  # proportional to each class's `weight` (set in generators/mixed.py from
+  # the per-class `users` values below).
+  users: 58
+  spawn_rate: 18
+  run_time_seconds: 75
+  host: "http://localhost:8000"
+
+flash_crowd:
+  users: 50
+  behavior:
+    think_time_min: 0.3
+    think_time_max: 1.5
+    search_terms: ["laptop", "phone", "shoes", "book", "camera", "headphones", "monitor"]
+    weights:
+      home: 3
+      search: 5
+      checkout: 1
+
+edos:
+  users: 8
+  behavior:
+    think_time_min: 0.05
+    think_time_max: 0.2
+    report_complexity: 60
+    weights:
+      generate_report: 10
+      checkout: 0

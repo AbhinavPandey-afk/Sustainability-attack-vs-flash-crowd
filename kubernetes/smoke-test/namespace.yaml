@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cascade-test
+  labels:
+    app.kubernetes.io/part-of: cascade
+    cascade.io/purpose: phase1-smoke-test

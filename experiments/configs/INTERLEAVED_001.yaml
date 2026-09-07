@@ -1,0 +1,58 @@
+# E4 — Interleaved: alternating flash-crowd/EDoS windows under one
+# continuous observation (CLAUDE.md section 13). Run via
+# experiments/run_interleaved_experiment.py, NOT run_experiment.py —
+# this config has a `phases` list instead of one scalar experiment.label,
+# since ground truth varies over time within the run.
+#
+# NOTE ON SCALE: proof-of-concept, like the other configs in this
+# directory — see docs/experiment_protocol.md.
+#
+# Each phase is exactly as long as the feature window (detector.
+# window_seconds below), so every feature window falls fully inside one
+# phase and per-window ground truth is unambiguous (alignment precision
+# is still bounded by the ~5s replica-sampler/Prometheus polling
+# granularity — see docs/experiment_protocol.md).
+experiment:
+  name: INTERLEAVED_001
+  scenario_type: interleaved
+  seed: 42
+  # Derived: sum of phases[*].duration_seconds below (4 x 20s). Kept
+  # explicit for display purposes; tests/experiments assert it stays
+  # consistent with the phase list.
+  duration_seconds: 80
+
+phases:
+  - scenario_type: flash_crowd
+    scenario_file: traffic/scenarios/flash_crowd.yaml
+    duration_seconds: 20
+    label: 0
+  - scenario_type: edos
+    scenario_file: traffic/scenarios/edos.yaml
+    duration_seconds: 20
+    label: 1
+  - scenario_type: flash_crowd
+    scenario_file: traffic/scenarios/flash_crowd.yaml
+    duration_seconds: 20
+    label: 0
+  - scenario_type: edos
+    scenario_file: traffic/scenarios/edos.yaml
+    duration_seconds: 20
+    label: 1
+
+detector:
+  window_seconds: [20]
+  step_seconds: 20
+
+cost_model:
+  replica_cost_per_minute: 1.0
+  cpu_cost_weight: 0.0
+  memory_cost_weight: 0.0
+
+replica_sampler:
+  interval_seconds: 5
+  namespace: cascade
+  deployment: cascade-app
+  hpa: cascade-app
+
+prometheus:
+  base_url: http://localhost:9090

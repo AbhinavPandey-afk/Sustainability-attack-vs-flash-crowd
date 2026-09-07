@@ -1,0 +1,23 @@
+# CPU-utilization-based autoscaling (CLAUDE.md section 9 defaults).
+# Edit minReplicas/maxReplicas/averageUtilization directly for experiments
+# that need different HPA parameters — kept as plain YAML rather than a
+# templating layer, matching the project's "no unnecessary complexity" rule.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: cascade-app
+  namespace: cascade
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: cascade-app
+  minReplicas: 1
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60

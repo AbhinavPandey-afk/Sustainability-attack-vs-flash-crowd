@@ -1,0 +1,25 @@
+# Environment / secrets
+.env
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+
+# Editors
+.vscode/
+.idea/
+.DS_Store
+
+# Generated experiment data and results (later phases)
+data/raw/
+data/processed/
+data/experiments/
+results/
+
+# kubeconfig exported for local debugging
+*.kubeconfig

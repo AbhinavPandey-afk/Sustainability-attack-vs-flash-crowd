@@ -1,0 +1,5 @@
+# Test dependencies shared across phases. Install alongside app/requirements.txt:
+#   pip install -r requirements-dev.txt -r app/requirements.txt
+pytest>=8.0
+PyYAML>=6.0
+httpx>=0.27  # required by FastAPI's TestClient (tests/test_app.py)
