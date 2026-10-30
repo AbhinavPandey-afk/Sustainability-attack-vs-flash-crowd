@@ -21,6 +21,7 @@ import time
 from pathlib import Path
 from typing import Callable
 
+import httpx
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -29,8 +30,44 @@ if str(REPO_ROOT) not in sys.path:
 
 from app.src.cost import CostModelConfig  # noqa: E402
 from feature_engineering.build_features import build_features  # noqa: E402
-from feature_engineering.collect_metrics import PrometheusClient, ReplicaSampler, align_raw_dataframe  # noqa: E402
+from feature_engineering.collect_metrics import (  # noqa: E402
+    PrometheusClient,
+    ReplicaResetError,
+    ReplicaResetter,
+    ReplicaSampler,
+    ResetConfig,
+    ResetRetryConfig,
+    align_raw_dataframe,
+    ensure_isolated_with_retry,
+)
 from feature_engineering.validate_features import validate  # noqa: E402
+
+
+def check_host_reachable(host: str, timeout_seconds: float = 5.0) -> None:
+    """Fails fast, before any traffic is generated, if `host` is not
+    reachable — e.g. a `kubectl port-forward` tunnel that died from pod
+    churn during the isolation wait (live-observed: HPA scale-down can
+    delete the specific pod a port-forward is bound to, silently
+    breaking the tunnel without the process managing it ever being
+    told — see docs/experiment_protocol.md §10.5/§11). Without this
+    check, a dead tunnel was previously only discovered after every
+    request in the entire traffic-generation window had already failed.
+
+    Not a fix for the tunnel dying (this project doesn't manage
+    port-forward processes — see docs/experiment_protocol.md §11 for why
+    a self-healing tunnel wrapper or NodePort was deliberately not
+    implemented) — only makes an already-dead tunnel fail loudly and
+    immediately instead of being silently discovered 60+ seconds later
+    as near-empty telemetry.
+    """
+    try:
+        httpx.get(f"{host.rstrip('/')}/healthz", timeout=timeout_seconds)
+    except httpx.TransportError as exc:
+        raise ConnectionError(
+            f"{host} is not reachable right before traffic generation was about to start "
+            "(a kubectl port-forward tunnel may have died during the isolation wait). "
+            "Experiment aborted before traffic generation."
+        ) from exc
 
 
 class RunCancelled(Exception):
@@ -78,16 +115,57 @@ def run_experiment(
     duration_seconds = exp["duration_seconds"]
 
     replica_cfg = config.get("replica_sampler", {})
+
+    # Mandatory experiment isolation (docs/research_gap_audit.md Part 3/7):
+    # scale to the HPA's minReplicas and confirm it holds there BEFORE any
+    # traffic is generated, so this run's scaling/cost telemetry can never
+    # silently inherit a previous run's replica count. Retried with
+    # backoff at this orchestration level (docs/experiment_protocol.md
+    # §11) — ReplicaResetter itself makes a single, self-contained
+    # attempt and alone decides whether it succeeded; ReplicaResetError
+    # is propagated (never swallowed) if every attempt fails, and no
+    # traffic is generated in that case.
+    reset_cfg = config.get("reset", {})
+    resetter = ReplicaResetter(
+        namespace=replica_cfg.get("namespace", "cascade"),
+        deployment=replica_cfg.get("deployment", "cascade-app"),
+        hpa=replica_cfg.get("hpa", "cascade-app"),
+    )
+    ensure_isolated_with_retry(resetter, ResetConfig.from_dict(reset_cfg), ResetRetryConfig.from_dict(reset_cfg))
+
+    # Fail fast if the app itself isn't reachable right now (see
+    # check_host_reachable's docstring) — cheaper than discovering a dead
+    # port-forward tunnel only after the whole traffic window has failed.
+    check_host_reachable(host)
+
+    # Same reasoning, for Prometheus (matrix-orchestration-hardening
+    # session, 2026-09-17): before this check existed, a Prometheus that
+    # was already down would only be discovered AFTER a full traffic
+    # -generation window had already been spent, at the
+    # collect_app_metrics() call near the end of this function — wasting
+    # the entire run instead of failing before any traffic started. The
+    # SAME PrometheusClient instance created here is reused for the real
+    # collect_app_metrics() call later, rather than creating a second one.
+    prometheus_url = config.get("prometheus", {}).get("base_url", default_prometheus_url)
+    prom = PrometheusClient(base_url=prometheus_url)
+    prom.check_reachable()
+
     sampler = ReplicaSampler(
         namespace=replica_cfg.get("namespace", "cascade"),
         deployment=replica_cfg.get("deployment", "cascade-app"),
         hpa=replica_cfg.get("hpa", "cascade-app"),
     )
 
+    sampler_interval_seconds = replica_cfg.get("interval_seconds", 5)
+    sampler_stop_event = threading.Event()
     start_time = time.time()
     sampler_thread = threading.Thread(
         target=sampler.sample_for,
-        kwargs={"duration_seconds": duration_seconds, "interval_seconds": replica_cfg.get("interval_seconds", 5)},
+        kwargs={
+            "duration_seconds": duration_seconds,
+            "interval_seconds": sampler_interval_seconds,
+            "stop_event": sampler_stop_event,
+        },
     )
     sampler_thread.start()
 
@@ -132,15 +210,35 @@ def run_experiment(
         if proc.returncode != 0:
             raise subprocess.CalledProcessError(proc.returncode, cmd)
     except RunCancelled:
+        # Stop the background sampler immediately rather than letting it
+        # keep polling the Kubernetes API for the rest of duration_seconds
+        # after this run has already been abandoned (see ReplicaSampler.
+        # sample_for's stop_event docstring).
+        sampler_stop_event.set()
+        sampler_thread.join(timeout=sampler_interval_seconds + 5)
         if staging_output_dir.exists():
             shutil.rmtree(staging_output_dir, ignore_errors=True)
+        raise
+    except Exception:
+        # Traffic generation itself failed for any other reason (e.g. a
+        # dead port-forward tunnel surfacing as subprocess.CalledProcessError
+        # via Locust's --exit-code-on-error, docs/experiment_protocol.md
+        # §11) — same orphaned-sampler-thread cleanup as the cancellation
+        # path above, but the staging directory is deliberately NOT
+        # deleted here: it's the only diagnostic record of a failed run,
+        # and its ".inprogress" suffix already keeps it out of every
+        # glob that reads real experiment data (build_features.py,
+        # summarize_results.py) — see docs/experiment_protocol.md §12.
+        sampler_stop_event.set()
+        sampler_thread.join(timeout=sampler_interval_seconds + 5)
         raise
 
     sampler_thread.join()
     end_time = time.time()
 
-    prometheus_url = config.get("prometheus", {}).get("base_url", default_prometheus_url)
-    prom = PrometheusClient(base_url=prometheus_url)
+    # `prom` (PrometheusClient) was already created and reachability
+    # -checked above, before traffic generation — reused here, not
+    # re-instantiated.
     app_counters = prom.collect_app_metrics(start=start_time, end=end_time, step_seconds=5)
     raw = align_raw_dataframe(app_counters, sampler.samples)
 
@@ -161,16 +259,38 @@ def run_experiment(
 
     features_dir = output_features_dir or (REPO_ROOT / "data" / "features")
     features_path = features_dir / f"{experiment_id}.csv"
-    features_path.parent.mkdir(parents=True, exist_ok=True)
-    features.to_csv(features_path, index=False)
 
-    # Commit point: every step that can fail (traffic generation, Prometheus
-    # collection, feature building/validation) has already succeeded, so it
-    # is now safe to replace any previous raw telemetry for this experiment.
+    # Commit point (moved here — data-write-safety audit, matrix
+    # -orchestration-hardening session, 2026-09-17): every step that can
+    # fail (traffic generation, Prometheus collection, feature building/
+    # validation) has already succeeded by this point, so it is now safe
+    # to (a) replace any previous raw telemetry for this experiment and
+    # (b) write features.csv to the OFFICIAL data/features/ location.
+    #
+    # REAL BUG FIXED HERE: features.to_csv(features_path, ...) previously
+    # ran BEFORE this rename, meaning a crash/kill/unexpected exception
+    # in the narrow window between that write and this rename (e.g. a
+    # transient Windows PermissionError renaming a directory that was
+    # just written to — a documented real quirk, not hypothetical) would
+    # leave a complete-looking features.csv sitting in the OFFICIAL
+    # data/features/ directory with NO corresponding metadata.json (that
+    # is written even later) and NO promoted data/raw/<id>/ directory —
+    # exactly the "partial data silently in the official dataset" failure
+    # mode this project's own commit-point design was supposed to
+    # prevent. experiments/summarize_results.py::load_dataset()'s
+    # data/features/*.csv glob would have silently picked up such a file
+    # as a legitimate training sample. Fixed by writing features.csv
+    # AFTER the same rename that already gates the raw telemetry —
+    # nothing downstream of this point needs the file to already exist on
+    # disk, only the in-memory `features`/`features_path` values, so this
+    # reordering changes WHEN the write happens, not what is written.
     if final_output_dir.exists():
         shutil.rmtree(final_output_dir)
     staging_output_dir.rename(final_output_dir)
     timeseries_path = final_output_dir / "timeseries.csv"
+
+    features_path.parent.mkdir(parents=True, exist_ok=True)
+    features.to_csv(features_path, index=False)
 
     metadata = {
         "experiment_id": experiment_id,

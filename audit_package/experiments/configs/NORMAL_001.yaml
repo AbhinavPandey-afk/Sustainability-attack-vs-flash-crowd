@@ -1,0 +1,32 @@
+# E0 — normal (non-attack, non-surge) baseline traffic (CLAUDE.md section 13).
+# Used purely as a visual/comparison reference point — "what does the app
+# look like on an ordinary day" — never as training data for the EDoS vs
+# Flash Crowd classifier. label: 0 is an arbitrary placeholder required by
+# the shared pipeline's schema; this run's features are written to
+# data/features/baseline/ (see webapp/backend/runner.py), kept out of
+# every training/PCA/SHAP glob over data/features/*.csv.
+experiment:
+  name: NORMAL_001
+  label: 0
+  scenario_type: normal
+  scenario_file: traffic/scenarios/normal.yaml
+  duration_seconds: 75
+  seed: 42
+
+detector:
+  window_seconds: [20]
+  step_seconds: 20
+
+cost_model:
+  replica_cost_per_minute: 1.0
+  cpu_cost_weight: 0.0
+  memory_cost_weight: 0.0
+
+replica_sampler:
+  interval_seconds: 5
+  namespace: cascade
+  deployment: cascade-app
+  hpa: cascade-app
+
+prometheus:
+  base_url: http://localhost:9090

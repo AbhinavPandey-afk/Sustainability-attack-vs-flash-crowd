@@ -122,6 +122,7 @@ export interface HistoryEntry {
   experiment_id: string
   metadata: ExperimentMetadata
   label: 0 | 1 | null
+  scenario_type: ScenarioType | string | null
   scenario_label: string
   summary: {
     request_rate: number | null
@@ -149,6 +150,27 @@ export interface ClassificationMetrics {
   model: string
 }
 
+// results/tables/baseline_results.csv — one row per baseline detector
+// (rate_limiter, volumetric_detector), read verbatim off disk.
+export interface BaselineResultRow {
+  detector: string
+  threshold: number | null
+  attack_detected: boolean | null
+  false_positive_on_flash_crowd: boolean | null
+  false_positive_rate: number | null
+  detection_latency: number | null
+  cost_before_detection: number | null
+  tp: number | null
+  fn: number | null
+  fp: number | null
+  tn: number | null
+  tpr: number | null
+  fpr: number | null
+  precision: number | null
+  recall: number | null
+  f1: number | null
+}
+
 export interface DetectionSummary {
   available: boolean
   detail?: string
@@ -167,9 +189,12 @@ export interface DetectionSummary {
   }
   lightgbm_metrics?: ClassificationMetrics
   baseline_metrics?: Record<string, Record<string, unknown>>
-  ablation_results?: Record<string, unknown>[]
-  model_comparison?: Record<string, unknown>[]
-  baseline_results?: Record<string, unknown>[]
+  // results/tables/ablation_results.csv and model_comparison.csv share
+  // ClassificationMetrics's exact column set — `model` holds the feature-set
+  // or model name being compared (e.g. "A_volume_only", "LightGBM_C_proposed_full").
+  ablation_results?: ClassificationMetrics[]
+  model_comparison?: ClassificationMetrics[]
+  baseline_results?: BaselineResultRow[]
   is_proof_of_concept?: boolean
 }
 
@@ -241,6 +266,22 @@ export interface PredictionWindow {
   predicted_label: 0 | 1
 }
 
+export interface LiveImpact {
+  kubernetes_available: boolean
+  replicas: number | null
+  min_replicas: number | null
+  max_replicas: number | null
+  cpu_utilization_pct: number | null
+  prometheus_available: boolean
+  request_rate_total: number | null
+  request_rate_by_class: Record<string, number | null>
+  request_delta_by_class: Record<string, number> | null
+  expensive_endpoint_ratio: number | null
+  cost_rate_per_minute: number | null
+  estimated_cost_session: number
+  replica_cost_per_minute: number
+}
+
 export interface PredictionResponse {
   available: boolean
   detail?: string
@@ -249,4 +290,53 @@ export interface PredictionResponse {
   windows?: PredictionWindow[]
   final_probability_edos?: number
   final_predicted_label?: 0 | 1
+}
+
+// The real stored output of experiments/match_quality.py's matched-signature
+// calibration flow (data/experiments/<candidate>/match_report.json) — e.g.
+// EDOS_MATCHED_E6_001 calibrated against FC_HARDNEG_001. Never recomputed
+// on the frontend; read exactly as stored.
+export interface FiguresListResponse {
+  figures: string[]
+}
+
+export interface ShapFeatureRow {
+  feature: string
+  mean_abs_shap: number | null
+  [key: string]: unknown
+}
+
+export interface ShapSummaryResponse {
+  feature_importance: ShapFeatureRow[]
+  summary_figure_available: boolean
+  all_zero: boolean
+}
+
+export interface PcaPoint {
+  experiment_id: string
+  label: 0 | 1 | null
+  pc1: number
+  pc2: number | null
+}
+
+export interface PcaResponse {
+  available: boolean
+  detail?: string
+  points: PcaPoint[]
+}
+
+export interface MatchReport {
+  reference_experiment_id: string
+  candidate_experiment_id: string
+  tolerances: Record<string, number>
+  request_rate_delta_pct: number | null
+  cpu_delta_pct: number | null
+  peak_replica_delta_pct: number | null
+  mean_replica_delta_pct: number | null
+  replica_minutes_delta_pct: number | null
+  total_cost_delta_pct: number | null
+  cost_per_request_delta_pct: number | null
+  primary_match_axes: string[]
+  axis_matched: Record<string, boolean>
+  match_status: 'MATCHED' | 'NOT_MATCHED' | 'EXHAUSTED' | string
 }

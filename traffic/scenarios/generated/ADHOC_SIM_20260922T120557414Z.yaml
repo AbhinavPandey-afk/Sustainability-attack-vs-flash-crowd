@@ -1,0 +1,28 @@
+scenario:
+  name: ADHOC_SIM_20260922T120557414Z
+  type: flash_crowd
+  description: "Ad-hoc Traffic Classification Simulator run (webapp) \u2014 parameters\
+    \ set by the operator; class determined by the trained detector, not asserted\
+    \ here."
+locust:
+  users: 50
+  spawn_rate: 10.0
+  run_time_seconds: 60
+  host: http://localhost:8000
+behavior:
+  think_time_min: 0.3
+  think_time_max: 1.5
+  report_complexity: 20
+  search_terms:
+  - laptop
+  - phone
+  - shoes
+  - book
+  - camera
+  - headphones
+  - monitor
+  weights:
+    home: 3
+    search: 5
+    checkout: 1
+    generate_report: 1

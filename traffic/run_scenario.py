@@ -58,6 +58,16 @@ def main() -> int:
         # be ignored by Locust but is skipped here for clarity.
         cmd += ["--users", str(users), "--spawn-rate", str(spawn_rate)]
     cmd += ["--run-time", run_time, "--headless", "--csv", str(csv_prefix), "--csv-full-history"]
+    # Without this, Locust exits 0 whenever --run-time is reached
+    # regardless of request failures — a dead kubectl port-forward tunnel
+    # (live-observed: HPA scale-down can delete the specific pod a
+    # port-forward is bound to, see docs/experiment_protocol.md §10.5/§11)
+    # would silently produce near-empty telemetry that looked like a
+    # successful run to experiments/run_experiment.py's `returncode != 0`
+    # check. --exit-code-on-error makes ANY request failure during the
+    # run a non-zero exit, which that existing check already propagates
+    # as a real, loud failure.
+    cmd += ["--exit-code-on-error", "1"]
 
     env = dict(os.environ)
     env["CASCADE_SCENARIO"] = str(scenario_path)

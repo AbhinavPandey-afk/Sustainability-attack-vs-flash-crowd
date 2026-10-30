@@ -1,0 +1,31 @@
+# E5/E7 stealth EDoS — repeatability repetition 2 of the approved
+# EDOS_STEALTH_001 design (identical scenario/config, distinct seed only).
+# See EDOS_STEALTH_001.yaml and traffic/scenarios/edos_stealth.yaml for the
+# full rationale. Does NOT modify EDOS_STEALTH_001, edos_stealth.yaml, or
+# any workload parameter — additive, uniquely-identified repetition, added
+# during the E5 repeatability-validation session.
+experiment:
+  name: EDOS_STEALTH_002
+  label: 1
+  scenario_type: edos
+  scenario_file: traffic/scenarios/edos_stealth.yaml
+  duration_seconds: 75
+  seed: 71
+
+detector:
+  window_seconds: [20]
+  step_seconds: 20
+
+cost_model:
+  replica_cost_per_minute: 1.0
+  cpu_cost_weight: 0.0
+  memory_cost_weight: 0.0
+
+replica_sampler:
+  interval_seconds: 5
+  namespace: cascade
+  deployment: cascade-app
+  hpa: cascade-app
+
+prometheus:
+  base_url: http://localhost:9090

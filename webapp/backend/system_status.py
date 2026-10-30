@@ -1,8 +1,7 @@
 """Live health checks for the components the dashboard depends on.
 
-Every status is verified, never assumed — CLAUDE.md section 39 ("Do not
-claim healthy unless verified") and the master prompt's "System status"
-requirement both apply here.
+Every status is verified, never assumed — never claim a component healthy
+without an actual live check.
 """
 from __future__ import annotations
 

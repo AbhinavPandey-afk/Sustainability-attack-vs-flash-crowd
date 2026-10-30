@@ -1,0 +1,105 @@
+CASCADE AUDIT PACKAGE — SOURCE MANIFEST
+========================================
+
+Package generation timestamp (UTC): 2026-09-17T05:59:11Z
+Git HEAD commit:                    635d48c040c9910c71eb9da26b1cf8ff6f29af76
+Git commit subject:                 "Completed" (git log --oneline -1)
+Working tree status:                DIRTY (uncommitted changes present)
+
+IMPORTANT: There is NO git commit corresponding to the current working
+state of the files in this package. Every file listed below that is
+part of the final-experiment-design work (experiments/final_matrix.yaml,
+the calibration additions to experiments/match_quality.py, the stealth-
+EDoS and EDoS-first-interleaved configs, the mixed.yaml/scenario_builder.py
+fixes, the docs/experiment_protocol.md additions, and the new/updated
+test files) exists ONLY in the uncommitted working tree, not in any git
+commit. HEAD (635d48c) predates all of this work. git status --short
+confirms this: every file this package's source-of-truth work touched
+shows as modified (M) or untracked (??) relative to HEAD, not committed.
+
+Hash algorithm: SHA-256 (GNU coreutils sha256sum)
+File count below: 79
+
+----------------------------------------------------------------------
+PER-FILE MANIFEST (relative path, size in bytes, SHA-256)
+----------------------------------------------------------------------
+
+audit_package/CONFIG_SUMMARY.md  size=10628  sha256=43e72f7772099d06fab777ab622cb43ed14429b0850250d29eac239d289ae22e
+audit_package/DIRECTORY_INVENTORY.txt  size=7768  sha256=4db627ed3e447b9b2ffa36640979eebd47156dd71471462194cd68accbf6ec5b
+audit_package/RESEARCH_MATRIX_MAP.md  size=12645  sha256=69155becb2119abddb667c5533a3a2a3b1f2a8dbbabc52323cedbc279295a998
+audit_package/app/src/cost.py  size=4587  sha256=6170109dc2f762ee790b520270dd753ab31f572a5eb79e986a74b07b373cb092
+audit_package/data/experiments/ADHOC_ATTACK_20260901T103629856Z/metadata.json  size=846  sha256=8a1b9412ebd8b652cc3e339a0cf07988eee5b6550c7ea3c7c9899d4692bbca16
+audit_package/data/experiments/ADHOC_FC_20260901T103733728Z/metadata.json  size=830  sha256=3c873face549ce12ac89387fd2e33fce77868a7103948a64efc25f2277678246
+audit_package/data/experiments/EDOS_001/metadata.json  size=732  sha256=1ff8470c0e5254db259364e490be3667b688a619bfd48fd003715fb1190bbf69
+audit_package/data/experiments/EDOS_002/metadata.json  size=676  sha256=bf18c08f5ec602f0cfd7055b408c701799a5eb5649ada7a41048f1345bf39c41
+audit_package/data/experiments/EDOS_003/metadata.json  size=676  sha256=9f27be8c6bfc4d738bec7604eb33b95bf11f84d5889fef31c997737775b57bbd
+audit_package/data/experiments/FC_001/metadata.json  size=724  sha256=341d2426f25e1b00411a92852fe21a2372dd0d822a240d7f99f32729b5f28266
+audit_package/data/experiments/FC_002/metadata.json  size=668  sha256=6e14c263ab4a2a852bb22132a238c8db7358eb10f2a2e50a40d60be65700f3bd
+audit_package/data/experiments/FC_003/metadata.json  size=724  sha256=49b9e2d06213f0a5a449c0e79a1deb9ced3f980dca9d7472963fa0c281a8ca4c
+audit_package/data/experiments/FC_VIRAL_001/metadata.json  size=748  sha256=db6eb5dd5a665611a91f6e3d7eed1050d3db413a527dd400e0d026c920bd46b3
+audit_package/data/experiments/INTERLEAVED_001/metadata.json  size=1830  sha256=bf3ec2df3d797e3ad51357ba45f8d4d97a47e8aca6f9461d4f20b3daa8cac6a5
+audit_package/data/experiments/INTERLEAVED_HAPPY_TEST/metadata.json  size=1413  sha256=4b0ebf94d0a8addea92307348f9f274373413c905d941d7ecf765c2b79705162
+audit_package/data/experiments/MIX_001/metadata.json  size=626  sha256=0d71e8de2732c0f6dd18e1636cd59c2139fd567c4f256cc9ea047d287b240151
+audit_package/data/experiments/NORMAL_001/metadata.json  size=750  sha256=93c5b534dbc0421c8da51f8af6164331bfcc180bd0523b876387c46cd6cfce91
+audit_package/data/experiments/SMOKE_A_PASS/metadata.json  size=805  sha256=4097b3a23160213a862ab4b19934ec2d854787d881062d7c04e5cf57145b8021
+audit_package/data/experiments/SMOKE_C_PASS/metadata.json  size=805  sha256=a27b0e8218c8eb5ef7f7fa02a911feaea12dedd545e69da1059fbf8f4831cefc
+audit_package/data/experiments/VALIDATION_EDOS_001/metadata.json  size=816  sha256=20dbf00ad088fcc172939d4caf1233b76f1835d156c8076327ff460370c55665
+audit_package/data/experiments/VALIDATION_FC_001/metadata.json  size=808  sha256=a1767f9b33b9a396060a68389f7d7b1f25be78bdf1de95b63b1bee210584b13e
+audit_package/data/experiments/VALIDATION_FC_HARDNEG_001/metadata.json  size=840  sha256=39573f4da293c472076b686cd822bcd4e67768a20f23216becd13289f9a598e2
+audit_package/docs/experiment_protocol.md  size=88570  sha256=60b0131ec8e811f5d9f3764c85c49135369c66134afba2fbeb9646148728464f
+audit_package/docs/feature_dictionary.md  size=9897  sha256=c14d883eb9dce1b8b999634519c693495d59bdb678c0b599268de62a00a38c1f
+audit_package/docs/research_gap_audit.md  size=47313  sha256=3eb394eb3d7b9d7620610ca8b39fd795d0c2b7f4482cb9789099319e644eca34
+audit_package/experiments/configs/EDOS_001.yaml  size=737  sha256=234add59bb0c0a826c104e761ae5b9e64e7c4f716ac4c485f7f013497cd3235e
+audit_package/experiments/configs/EDOS_002.yaml  size=440  sha256=17a036d3dc28968ec4f2bd92e8f2c8d10773598589db36f04594c1be51e0107f
+audit_package/experiments/configs/EDOS_003.yaml  size=440  sha256=29d6c0fbe00c4e80c9de17ad5748e8595db4308be2648612fefa04cba16f8e88
+audit_package/experiments/configs/EDOS_STEALTH_001.yaml  size=1150  sha256=d23d9aa19089b4f20956c801b95593a8521c4a22071b22cbd30528a3292e064e
+audit_package/experiments/configs/FC_001.yaml  size=452  sha256=996a4c46908ac7ea373b83d5918af253593c213e5604152b1546b676ac8bf275
+audit_package/experiments/configs/FC_002.yaml  size=452  sha256=b05d138f0e152ae07c58243ff70b377e1558169f0e71c3b3d234a9932a5d6bb2
+audit_package/experiments/configs/FC_003.yaml  size=452  sha256=2bb8debcf0d807342ca731f845373643434e77bd0548197401ed1da408e78049
+audit_package/experiments/configs/FC_HARDNEG_001.yaml  size=1339  sha256=93323cc1f85a25f0f62926e6bfd7a120308b938bfaf3ead59df53e5d17fc1e4a
+audit_package/experiments/configs/FC_VIRAL_001.yaml  size=880  sha256=c68e7fa90f9def63ac2aac1ffcc00f2d34abad423cf82a25ebedf62dce8073f0
+audit_package/experiments/configs/INTERLEAVED_001.yaml  size=1815  sha256=78d96efdc9e1393f43b8bc7b21c47ae977fe3567995b17436fdecdfc18c19607
+audit_package/experiments/configs/INTERLEAVED_EDOS_FIRST_001.yaml  size=2400  sha256=032c588409ab3c71b4cbe1b7f52c5a070ad60c7dc6c9f9144c93860f2aed2ab5
+audit_package/experiments/configs/MIX_001.yaml  size=1391  sha256=cc14c307394a558362012d5079a4932a3430f30302ff3d0b7a8b75134df7539a
+audit_package/experiments/configs/NORMAL_001.yaml  size=947  sha256=2f041b91ddacfbed5b04824d18d1fce22b246a84971e82077ff190a3be356591
+audit_package/experiments/configs/generated/ADHOC_ATTACK_20260901T103629856Z.yaml  size=522  sha256=64d61d194faa27094e3a60780dff80d4a5097bb9f90d4977b053bc9e10d09ae2
+audit_package/experiments/configs/generated/ADHOC_ATTACK_20260909T064827968Z.yaml  size=522  sha256=4f3c57a4d1b953e2d3426185aecde8b0249659e937ec1e0a410f29f3d8411608
+audit_package/experiments/configs/generated/ADHOC_FC_20260901T103733728Z.yaml  size=521  sha256=cca6d1bbbf31546facf0c1195b1407b003d2106bed33878bc26d66c2669fdaeb
+audit_package/experiments/final_matrix.yaml  size=33335  sha256=8bd374bb7c534869fe90fe3e512485c59392352480e19c7e1fe43686cfe0b99f
+audit_package/experiments/match_quality.py  size=29993  sha256=4c9c5a3c70dadf2620b63dc894550f2fc0ee06a84f2af38ce75bf3a4d44033d6
+audit_package/experiments/run_experiment.py  size=12502  sha256=1b7b179dd699e3ecb04c3dc727d01d44ffb3ca79adc54b017d09950cc0a7884d
+audit_package/experiments/run_interleaved_experiment.py  size=10310  sha256=ca970bbbe55840f3087995299684e385d6055783177f58487a2ef57eb05b5647
+audit_package/experiments/run_matrix.py  size=11801  sha256=c6940f737286640bb4c0f43517f2f5849e87080c27cebea5bc8de8482c27331b
+audit_package/feature_engineering/behaviour_features.py  size=4182  sha256=a9783dc51441c865e5d92de68fe62817f39811dfcada2f30d0ffdd5fed8cb4d5
+audit_package/feature_engineering/build_features.py  size=4776  sha256=f1b63ad94fd31bafb9d88abf1c90c7e885ca7a31ca17987b28f1f03d6781b6fb
+audit_package/feature_engineering/collect_metrics.py  size=21854  sha256=16ec04804ae4f0491083f71feaf0eada512f09c7c5d900a621a745ba5b57ebd8
+audit_package/feature_engineering/cost_features.py  size=2461  sha256=bc9e14041aa9e9e878a85565184e92698e53c5dd568d98b7f035cbfa1f337214
+audit_package/feature_engineering/scaling_features.py  size=2639  sha256=1465a5538c78e1cd025729611ab24951898c1bccfb41995315893ff50cc29976
+audit_package/feature_engineering/traffic_features.py  size=2239  sha256=1f374cbeabe6eac192094e45d765e82b73bde91361e36b084989ab756d69c4b6
+audit_package/feature_engineering/validate_features.py  size=2861  sha256=3a5fa76be2da49942c98e536b03439a779fdddb668aa69d925ae9096698e7d6e
+audit_package/models/dataset.py  size=4526  sha256=42120d3b2a484b3d11babb052c64ebf701631003e62fb139ece8275995bca2f3
+audit_package/models/evaluate.py  size=2820  sha256=8fe3568de57c5eb303a80c534aa73cd16bc7713781fa76bb9ec5265415669cdd
+audit_package/models/explain.py  size=1454  sha256=ce76acd0fd23d57c5f6866b5ad68c69b2b56251b569ce9b514d5d49e487023e6
+audit_package/models/feature_sets.py  size=1956  sha256=8d53d613a2eb0454c207ecba51cc9ca5136e2105470a62b5aa6c3edf695f7835
+audit_package/models/predict.py  size=866  sha256=0653cb399eb79d2783e414485b1e85ba643fc49438e350d091bab76302170b71
+audit_package/models/train_lightgbm.py  size=2658  sha256=0150e5c287c9975e9100d39f993da721603b1be142554f1c48db88708efc89a3
+audit_package/models/train_random_forest.py  size=938  sha256=f76607ad697e40de6c5a6f4c02d37b5d4d094aa783f18ead2e89643b3d8661e6
+audit_package/tests/experiments/test_final_matrix.py  size=8388  sha256=656da8b5cea4ddc055e4bb770679fe078f3f3248355476a3d83fdc79e2135b75
+audit_package/tests/experiments/test_match_quality.py  size=19384  sha256=e5c933461ac9af967a584b18593b4548f316c03ef0af32c5b8fa9f6577a8d873
+audit_package/tests/experiments/test_run_interleaved_experiment.py  size=10427  sha256=3a71f13bb8e6802e04b1d9f3b270b6eadcfb9cbafe23580ad39495f8aa26cd0e
+audit_package/tests/experiments/test_run_matrix.py  size=10590  sha256=ce0f7c1f8dfa81ebacc1e0babf058471aca81d2e57ba03281e550e256f6555c1
+audit_package/tests/traffic/test_scenarios.py  size=8313  sha256=030a47c4634244762ac819fb3ff472b0354e5ca21181bc0d83731d9400a13aff
+audit_package/traffic/generators/__init__.py  size=2313  sha256=b5b7cab440d0999aa54aca57374a5962fc104ef00bbdcf7de0cb9ceb06df7f0e
+audit_package/traffic/generators/edos.py  size=3133  sha256=06067110533af54e96366cc68a0646c52a4b600f4da7acd14ec9536424ac6f9e
+audit_package/traffic/generators/flash_crowd.py  size=3464  sha256=c9ddb7c2a1cebdd09173869adf8793af2680abbc04b01efdd5150f9446a9fb09
+audit_package/traffic/run_scenario.py  size=3851  sha256=f08e95e663e084430c1e6608ce51614cfeef5a87c7734a6136f12ac48f7b929f
+audit_package/traffic/scenarios/edos.yaml  size=2161  sha256=707555d17ae64a666156e5ce51c3aed4c944e5582321b130b83ab8d7d27b9fbe
+audit_package/traffic/scenarios/edos_stealth.yaml  size=3537  sha256=a0daf1e44ecc29d838c375dca59efcc1480e062345a79d222a8e22fb496254d8
+audit_package/traffic/scenarios/flash_crowd.yaml  size=626  sha256=1b44889cc5f451b43de8e7c407fc5b9ad79d707dfa732c1b7de1ac7a59e53c69
+audit_package/traffic/scenarios/flash_crowd_hard_negative.yaml  size=1854  sha256=c0fad2bd7a3af3cc780b12c05a97c36667b5215a8ed12178ea04d62477bb14ca
+audit_package/traffic/scenarios/flash_crowd_viral.yaml  size=1258  sha256=93234a3a5c433bbfdd59ac8c34e5950ee0f45d3a2644fc0560329364baf0c622
+audit_package/traffic/scenarios/generated/ADHOC_ATTACK_20260901T103629856Z.yaml  size=352  sha256=229e5215379b3fabae3b198842e696ad9b363af36e23b6453b7389452c7eecd9
+audit_package/traffic/scenarios/generated/ADHOC_ATTACK_20260909T064827968Z.yaml  size=352  sha256=e6f4495b36f4ae6155d6b7d584e2d87dfdba329ca9b20c3873ef79d40bda45ef
+audit_package/traffic/scenarios/generated/ADHOC_FC_20260901T103733728Z.yaml  size=441  sha256=0ef85a28c37ec26218c40b4c419f47c3787c770b53cbc82e4bc0c950cdf1fdc8
+audit_package/traffic/scenarios/mixed.yaml  size=2593  sha256=7af1ec09bc34fa9033f0c5fe6a057b1dea42b5886ed7d575112c8fda204c9d92
+audit_package/traffic/scenarios/normal.yaml  size=531  sha256=1b066ded0b32fab037cc12746efb7426e809769b59f42af5f8d07ae1a2b65e92

@@ -1,0 +1,73 @@
+# Class 0 — Legitimate Flash Crowd, SECOND-GENERATION ("Gen2") hard-negative
+# variant. Approved via the research-design review that followed
+# docs/research_gap_audit.md's finding that the first-generation
+# hard-negative (flash_crowd_hard_negative.yaml, expensive_endpoint_ratio
+# 0.068-0.111) closed the O2 endpoint-availability-shortcut gap but never
+# moved cost/scaling features meaningfully toward EDoS's region (Phase 13
+# of that review). See docs/experiment_protocol.md's Gen2 design section
+# for the full derivation (report_load_index model, parametric grid,
+# rejection criteria) — this file implements the APPROVED "tier B /
+# moderate" parameterization from that review, not a fresh choice made
+# here.
+#
+# TWO cohorts run concurrently (traffic/generators/cohort_mixed.py), both
+# label=0:
+#   majority (70%, 35/50 users): byte-for-byte identical to
+#     flash_crowd.yaml's existing weights/think-time — zero report-viewing
+#     probability, unchanged from every already-validated plain flash-crowd
+#     run.
+#   minority (30%, 15/50 users): a "returning/engaged customer" segment
+#     with a real, bounded (70%, NOT EDoS's ~86%) per-cohort chance of
+#     viewing the personalized recommendation report, at report_complexity
+#     40 (below EDoS's 60; above Gen1's 30 — "a richer report shown during
+#     a promotional event", not a maximal/sustained workload). Think-time
+#     is UNCHANGED from ordinary flash-crowd behaviour (0.3-1.5s) for both
+#     cohorts — deliberately never borrows EDoS's near-zero (0.05-0.2s)
+#     think-time, which remains one of the design's stated legitimacy
+#     anchors.
+#
+# EXPECTED (HYPOTHESES, NOT RESULTS — see docs/experiment_protocol.md):
+#   aggregate expensive_endpoint_ratio ~= 0.30 x 0.70 = 0.21
+#   aggregate report_load_index (request_rate x ratio x complexity) ~= 319
+# Do not cite these as achieved until live telemetry is collected and
+# measured (Gen2 Phase 5-7).
+scenario:
+  name: flash_crowd_hard_negative_gen2
+  type: flash_crowd_cohort_mixed
+  description: "Gen2 hard-negative: two legitimate cohorts (70% casual / 30% engaged-report-viewing) at greater aggregate cost/scaling pressure than Gen1"
+
+locust:
+  # Sum of majority.users + minority.users below, so a single Locust run
+  # distributes exactly this many users across both cohorts, proportional
+  # to each cohort's `weight` (set in generators/cohort_mixed.py from the
+  # per-cohort `users` values below) -- identical mechanism to mixed.yaml's
+  # flash_crowd/edos split, applied here to two label=0 cohorts instead.
+  users: 50
+  spawn_rate: 10
+  run_time_seconds: 60
+  host: "http://localhost:8000"
+
+majority:
+  users: 35
+  behavior:
+    think_time_min: 0.3
+    think_time_max: 1.5
+    search_terms: ["laptop", "phone", "shoes", "book", "camera", "headphones", "monitor"]
+    weights:
+      home: 3
+      search: 5
+      checkout: 1
+      generate_report: 0
+
+minority:
+  users: 15
+  behavior:
+    think_time_min: 0.3
+    think_time_max: 1.5
+    search_terms: ["laptop", "phone", "shoes", "book", "camera", "headphones", "monitor"]
+    report_complexity: 40
+    weights:
+      home: 1
+      search: 1
+      checkout: 1
+      generate_report: 7

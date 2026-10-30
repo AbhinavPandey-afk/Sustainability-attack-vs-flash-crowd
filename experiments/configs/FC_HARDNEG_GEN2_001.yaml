@@ -1,0 +1,39 @@
+# Gen2 hard-negative flash crowd — approved research-design review
+# (see traffic/scenarios/flash_crowd_hard_negative_gen2.yaml and
+# docs/experiment_protocol.md's Gen2 section for full rationale/derivation).
+# Two legitimate (label=0) cohorts: 70% casual browsing (unchanged from
+# flash_crowd.yaml), 30% "engaged" cohort with a 70% per-cohort chance of
+# viewing the expensive report at complexity 40. Does NOT modify
+# FC_HARDNEG_001 or any existing scenario/config — purely additive.
+#
+# This is repetition 1 of >=5 planned independent-seed repetitions
+# (FC_HARDNEG_GEN2_001..005), mirroring the repeatability protocol already
+# used for the first-generation hard-negative (FC_HARDNEG_001/003-006).
+#
+# NOT YET PROMOTED into data/features/*.csv's main training glob — per
+# explicit instruction, Gen2 data stays isolated pending review.
+experiment:
+  name: FC_HARDNEG_GEN2_001
+  label: 0
+  scenario_type: flash_crowd_cohort_mixed
+  scenario_file: traffic/scenarios/flash_crowd_hard_negative_gen2.yaml
+  duration_seconds: 75
+  seed: 61
+
+detector:
+  window_seconds: [20]
+  step_seconds: 20
+
+cost_model:
+  replica_cost_per_minute: 1.0
+  cpu_cost_weight: 0.0
+  memory_cost_weight: 0.0
+
+replica_sampler:
+  interval_seconds: 5
+  namespace: cascade
+  deployment: cascade-app
+  hpa: cascade-app
+
+prometheus:
+  base_url: http://localhost:9090

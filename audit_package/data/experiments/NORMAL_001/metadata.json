@@ -1,0 +1,20 @@
+{
+  "experiment_id": "NORMAL_001",
+  "timestamp": "2026-09-01T10:21:36.253568+00:00",
+  "git_commit": "04c8c7f31bcf541d55bd2c6cf4860736f7ba6622",
+  "config_file": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\experiments\\configs\\NORMAL_001.yaml",
+  "seed": 42,
+  "label": 0,
+  "duration_seconds": 75,
+  "host": "http://localhost:8000",
+  "n_raw_samples": 31,
+  "n_feature_rows": 3,
+  "timeseries_path": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\data\\raw\\NORMAL_001\\timeseries.csv",
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "not_checked": []
+  },
+  "features_path": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\data\\features\\baseline\\NORMAL_001.csv"
+}

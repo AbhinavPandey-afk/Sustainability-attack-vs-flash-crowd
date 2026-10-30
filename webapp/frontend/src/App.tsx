@@ -1,21 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from './api'
 import { NavShell } from './components/NavShell'
-import { StatusBar } from './components/StatusBar'
-import { DEFAULT_PAGE, isPageId } from './nav'
+import { TopBar } from './components/TopBar'
+import { DEFAULT_PAGE, resolvePageId } from './nav'
 import type { PageId } from './nav'
+import { AnalysisPage } from './pages/AnalysisPage'
+import { AnalysisResultsPage } from './pages/AnalysisResultsPage'
 import { ArchitecturePage } from './pages/ArchitecturePage'
-import { AttackSimulatorPage } from './pages/AttackSimulatorPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { DatasetExportPage } from './pages/DatasetExportPage'
+import { DetectionPage } from './pages/DetectionPage'
 import { ExperimentsPage } from './pages/ExperimentsPage'
-import { FlashCrowdSimulatorPage } from './pages/FlashCrowdSimulatorPage'
 import { LiveMonitorPage } from './pages/LiveMonitorPage'
 import type { ExperimentExample, HistoryEntry, ResearchQuestion, RunStatus, SystemStatus } from './types'
 
 function currentPageFromHash(): PageId {
   const hash = window.location.hash.replace('#', '')
-  return isPageId(hash) ? hash : DEFAULT_PAGE
+  return hash ? resolvePageId(hash) : DEFAULT_PAGE
 }
 
 function App() {
@@ -95,50 +96,53 @@ function App() {
   }, [demoRunning, refreshExperiments])
 
   return (
-    <div className="app-shell">
-      <header className="header">
-        <div className="header-top">
-          <div className="brand">
-            <h1>CASCADE</h1>
-            <span className="sub">Cost-Aware Scaling and Application-behaviour Detection Engine</span>
-          </div>
-        </div>
-        <StatusBar status={status} />
-      </header>
-
+    <div className="shell">
       <NavShell active={page} onSelect={navigate} />
 
-      {page === 'dashboard' && (
-        <DashboardPage
-          status={status}
-          research={research}
-          history={history}
-          onRunDemo={handleRunDemo}
-          demoRunning={demoRunning}
-        />
-      )}
-      {page === 'live' && (
-        <LiveMonitorPage runningId={runningId} history={history} onRunStart={handleRunStart} onRunFinished={handleRunFinished} />
-      )}
-      {page === 'attack-sim' && <AttackSimulatorPage status={status} />}
-      {page === 'flashcrowd-sim' && <FlashCrowdSimulatorPage status={status} />}
-      {page === 'experiments' && (
-        <ExperimentsPage
-          examples={examples}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          runningId={runningId}
-          onRunStart={handleRunStart}
-          onRunFinished={handleRunFinished}
-        />
-      )}
-      {page === 'architecture' && <ArchitecturePage />}
-      {page === 'dataset' && <DatasetExportPage history={history} />}
+      <div className="shell-main">
+        <TopBar page={page} status={status} />
 
-      <div className="footer-note">
-        CASCADE research prototype — the cost model uses experimental cost units, independent of any specific cloud
-        provider. All figures on this page are read from real artifacts on disk or live system checks; nothing is
-        fabricated.
+        <div className="app-shell">
+          {page === 'overview' && (
+            <DashboardPage
+              status={status}
+              research={research}
+              history={history}
+              onRunDemo={handleRunDemo}
+              demoRunning={demoRunning}
+            />
+          )}
+          {page === 'system' && (
+            <LiveMonitorPage
+              status={status}
+              runningId={runningId}
+              history={history}
+              onRunStart={handleRunStart}
+              onRunFinished={handleRunFinished}
+            />
+          )}
+          {page === 'compare' && <AnalysisPage />}
+          {page === 'experiments' && (
+            <ExperimentsPage
+              examples={examples}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              runningId={runningId}
+              onRunStart={handleRunStart}
+              onRunFinished={handleRunFinished}
+            />
+          )}
+          {page === 'detection' && <DetectionPage />}
+          {page === 'analysis' && <AnalysisResultsPage />}
+          {page === 'architecture' && <ArchitecturePage />}
+          {page === 'dataset' && <DatasetExportPage history={history} />}
+
+          <div className="footer-note">
+            CASCADE research prototype — the cost model uses experimental cost units, independent of any specific
+            cloud provider. All figures on this page are read from real artifacts on disk or live system checks;
+            nothing is fabricated.
+          </div>
+        </div>
       </div>
     </div>
   )

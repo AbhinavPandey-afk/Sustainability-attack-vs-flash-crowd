@@ -1,0 +1,36 @@
+# E5 (CLAUDE.md §13) / "Stealth EDoS" (audit terminology) — see
+# traffic/scenarios/edos_stealth.yaml for the full rationale and the
+# CALIBRATION REQUIRED notice. This config is infrastructure to SUPPORT
+# the stealth-EDoS experiment, not evidence that stealth EDoS has been
+# validated — running this and observing a low request_rate does not, by
+# itself, prove the traffic stayed below the rate-limiter's calibrated
+# threshold; that threshold must be computed from real legitimate-traffic
+# data first (baselines/rate_limiter.py::calibrate_threshold).
+#
+# NOTE ON SCALE: 75s, proof-of-concept scale like every other config in
+# this directory — see docs/experiment_protocol.md §5.
+experiment:
+  name: EDOS_STEALTH_001
+  label: 1
+  scenario_type: edos
+  scenario_file: traffic/scenarios/edos_stealth.yaml
+  duration_seconds: 75
+  seed: 46
+
+detector:
+  window_seconds: [20]
+  step_seconds: 20
+
+cost_model:
+  replica_cost_per_minute: 1.0
+  cpu_cost_weight: 0.0
+  memory_cost_weight: 0.0
+
+replica_sampler:
+  interval_seconds: 5
+  namespace: cascade
+  deployment: cascade-app
+  hpa: cascade-app
+
+prometheus:
+  base_url: http://localhost:9090

@@ -1,0 +1,20 @@
+{
+  "experiment_id": "FC_003",
+  "timestamp": "2026-08-31T19:38:55.784697+00:00",
+  "git_commit": "04c8c7f31bcf541d55bd2c6cf4860736f7ba6622",
+  "config_file": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\experiments\\configs\\FC_003.yaml",
+  "seed": 44,
+  "label": 0,
+  "duration_seconds": 75,
+  "host": "http://localhost:8000",
+  "n_raw_samples": 31,
+  "n_feature_rows": 3,
+  "timeseries_path": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\data\\raw\\FC_003\\timeseries.csv",
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "not_checked": []
+  },
+  "features_path": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\data\\features\\FC_003.csv"
+}

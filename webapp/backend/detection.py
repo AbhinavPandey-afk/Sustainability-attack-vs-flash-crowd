@@ -2,8 +2,8 @@
 produced by experiments/summarize_results.py. Never hardcodes a verdict —
 every SUPPORTED/NOT SUPPORTED/INCONCLUSIVE/INSUFFICIENT DATA label is
 computed from the numbers in front of it, and the proof-of-concept data
-scale (CLAUDE.md section 5 / docs/experiment_protocol.md §5) always caps
-the verdict at INSUFFICIENT DATA regardless of which way the numbers point.
+scale (see docs/experiment_protocol.md §5) always caps the verdict at
+INSUFFICIENT DATA regardless of which way the numbers point.
 """
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ def evaluate_h1(summary: dict) -> dict:
         verdict = "INSUFFICIENT DATA"
         reason = (
             f"Only {n_experiments} labeled experiments exist (proof-of-concept scale). "
-            "CLAUDE.md's 90% recall / 30% FPR-reduction targets are research targets, not "
+            "The 90% recall / 30% FPR-reduction targets are research targets, not "
             "something a 6-experiment run can establish or refute with statistical confidence."
         )
     else:

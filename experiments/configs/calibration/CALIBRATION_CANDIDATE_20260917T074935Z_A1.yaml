@@ -1,0 +1,22 @@
+experiment:
+  name: CALIBRATION_CANDIDATE_20260917T074935Z_A1
+  label: 1
+  scenario_type: edos
+  scenario_file: traffic/scenarios/calibration/CALIBRATION_CANDIDATE_20260917T074935Z_A1.yaml
+  duration_seconds: 75
+  seed: 48
+detector:
+  window_seconds:
+  - 20
+  step_seconds: 20
+cost_model:
+  replica_cost_per_minute: 1.0
+  cpu_cost_weight: 0.0
+  memory_cost_weight: 0.0
+replica_sampler:
+  interval_seconds: 5
+  namespace: cascade
+  deployment: cascade-app
+  hpa: cascade-app
+prometheus:
+  base_url: http://localhost:9090

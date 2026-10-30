@@ -25,6 +25,13 @@ RESULTS_METRICS = RESULTS_DIR / "metrics"
 DEFAULT_APP_HOST = "http://localhost:8000"
 DEFAULT_PROMETHEUS_URL = "http://localhost:9090"
 
+# Matches app/src/cost.py CostModelConfig's default and the cost_model.
+# replica_cost_per_minute default used across experiments/configs/*.yaml
+# (CLAUDE.md section 10) — kept here (not imported) so the storefront's
+# live impact endpoint (live_impact.py) has no import-time coupling to the
+# app/ package.
+DEFAULT_REPLICA_COST_PER_MINUTE = 1.0
+
 # Below this many labeled experiments, results are proof-of-concept scale,
 # not a statistically meaningful research result (docs/experiment_protocol.md §5).
 PROOF_OF_CONCEPT_EXPERIMENT_THRESHOLD = 20
@@ -34,36 +41,25 @@ PROOF_OF_CONCEPT_EXPERIMENT_THRESHOLD = 20
 # elsewhere in the dashboard is read live from the actual config/result files.
 SCENARIO_PURPOSE = {
     "flash_crowd": (
-        "Legitimate high-demand surge: many simulated users browsing diverse, "
-        "low/medium-cost endpoints (home, search, checkout) with realistic "
-        "think-time. Represents plausible legitimate demand growth."
+        "Many simulated users browsing diverse endpoints — home, search, checkout — "
+        "with realistic think-time and natural conversion."
     ),
     "edos": (
-        "Synthetic Economic Denial of Sustainability traffic: few simulated "
-        "clients concentrated almost entirely on the deliberately expensive "
-        "generate-report endpoint, minimal think-time, no conversion. "
-        "Traffic volume is kept comparable to the flash-crowd scenario by "
-        "design (CLAUDE.md section 12) — the question is whether cost, "
-        "scaling and behaviour signals can still tell them apart."
+        "Few simulated clients concentrated almost entirely on the deliberately "
+        "expensive generate-report endpoint, minimal think-time, no conversion. "
+        "Traffic volume is kept comparable to the flash-crowd scenario."
     ),
     "mixed": (
-        "E3 — Flash-crowd and EDoS traffic running simultaneously against the "
-        "same app instance. Ground truth is label=1 (attack present) for the "
-        "whole run, since EDoS traffic never stops: the question is whether "
-        "the detector recognizes attack presence amid concurrent legitimate load."
+        "Flash-crowd and EDoS traffic running simultaneously against the same app "
+        "instance — attack present throughout the run."
     ),
     "interleaved": (
-        "E4 — Alternating flash-crowd/EDoS phases under one continuous "
-        "observation window. Each feature window carries its own real ground-"
-        "truth label (recorded from actual phase start/end timestamps, not "
-        "inferred) — this is the closest scenario here to how attack and "
-        "legitimate traffic would actually coexist over time."
+        "Alternating flash-crowd and EDoS phases under one continuous observation "
+        "window, each with its own real ground-truth label."
     ),
     "normal": (
-        "E0 — Normal baseline: light, diverse browsing with no surge and no "
-        "attack. Used only as a visual comparison reference point (\"what does "
-        "an ordinary day look like\") — its features are kept out of the "
-        "trained detector's data entirely (data/features/baseline/)."
+        "Light, diverse baseline browsing with no surge and no attack — an "
+        "ordinary-day reference point."
     ),
 }
 
@@ -100,9 +96,8 @@ KNOWN_LIMITATIONS = [
         "detail": (
             "The six experiment configs (FC_001-003, EDOS_001-003) run 75-second "
             "traffic bursts — suitable for demonstrating system behaviour end to "
-            "end, not yet the multi-minute, multi-repetition statistical protocol "
-            "CLAUDE.md sections 13 and 25 call for. Any classification/hypothesis "
-            "verdict shown here is provisional."
+            "end, not yet a multi-minute, multi-repetition statistical protocol. "
+            "Any classification/hypothesis verdict shown here is provisional."
         ),
     },
     {
@@ -143,7 +138,7 @@ KNOWN_LIMITATIONS = [
             "unique_client_ratio and requests_per_session are derived from the "
             "app_active_sessions gauge, not true client-identity measurements — "
             "the app never exposes session IDs or client IPs as Prometheus labels "
-            "by design (CLAUDE.md section 7 forbids unbounded labels)."
+            "by design (unbounded labels are avoided)."
         ),
     },
     {
@@ -166,7 +161,7 @@ DEMO_WALKTHROUGH = [
     "Select FC_VIRAL_001 to see the viral-event arrival curve (trickle -> S-curve ramp -> peak -> decay), and note the replica count actually scale up during the peak.",
     "Select an EDoS sample (e.g. EDOS_001) and compare its request-rate/replica/cost charts to the flash-crowd runs.",
     "Open 'Compare Two Experiments', pick a Flash Crowd and an EDoS run, and read the cost/request comparison directly.",
-    "Open Attack Simulator or Flash Crowd Simulator, configure parameters, and run a real live traffic simulation — watch it plotted against the NORMAL_001 'ordinary day' baseline on the same axes, then read the live CASCADE prediction once it completes.",
+    "Open the EDoS vs Flash Crowd Simulator, load a sample (or set your own traffic parameters), and run a real live simulation — the trained CASCADE detector determines EDoS vs Flash Crowd from the measured result, never a manual selection.",
     "Open Detection to see the trained model's actual evaluation metrics, the research hypotheses computed from those metrics, and why traffic volume alone can't separate the two classes.",
     "Open MIX_001 (E3) and INTERLEAVED_001 (E4) in Experiments to see attack and legitimate traffic simultaneously and alternating — then open Detection's mixed/interleaved evaluation to see the same trained model scored on them.",
 ]

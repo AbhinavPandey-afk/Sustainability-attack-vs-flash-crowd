@@ -1,0 +1,33 @@
+# E4 — Hard-negative Flash Crowd (docs/research_gap_audit.md Part 6;
+# CLAUDE.md non-negotiable principle #6/#10). Repeatability repetition of
+# FC_HARDNEG_001 (identical scenario/config, distinct seed only) — added
+# during the hard-negative-repeatability data-collection session
+# (2026-09-18) specifically to test whether FC_HARDNEG_001's observed
+# expensive-endpoint behaviour is repeatable rather than a one-off
+# property of that single run. Does NOT modify or overwrite
+# FC_HARDNEG_001 — this is an additive, uniquely-identified config.
+experiment:
+  name: FC_HARDNEG_002
+  label: 0
+  scenario_type: flash_crowd
+  scenario_file: traffic/scenarios/flash_crowd_hard_negative.yaml
+  duration_seconds: 75
+  seed: 43
+
+detector:
+  window_seconds: [20]
+  step_seconds: 20
+
+cost_model:
+  replica_cost_per_minute: 1.0
+  cpu_cost_weight: 0.0
+  memory_cost_weight: 0.0
+
+replica_sampler:
+  interval_seconds: 5
+  namespace: cascade
+  deployment: cascade-app
+  hpa: cascade-app
+
+prometheus:
+  base_url: http://localhost:9090

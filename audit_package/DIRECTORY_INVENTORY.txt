@@ -1,0 +1,151 @@
+CASCADE AUDIT PACKAGE — DIRECTORY INVENTORY (REGENERATED — SYNCHRONIZATION CHECK)
+Generated fresh from the live repository working tree at package-rebuild
+time, superseding an earlier (confirmed stale) audit_package. See
+audit_package/SOURCE_MANIFEST.txt for the exact generation timestamp,
+git commit, and per-file hashes that back this listing.
+
+Source: C:\Users\abhin\Sustainability-attack-vs-flash-crowd
+Listings below are the REAL relevant directory trees for the SOURCE
+repository (not the audit_package/ copy). __pycache__/*.pyc omitted as
+build artifacts. Nothing was modified to produce this file.
+
+=== experiments/ ===
+experiments/__init__.py
+experiments/configs/EDOS_001.yaml
+experiments/configs/EDOS_002.yaml
+experiments/configs/EDOS_003.yaml
+experiments/configs/EDOS_STEALTH_001.yaml                    [NEW since prior audit_package]
+experiments/configs/FC_001.yaml
+experiments/configs/FC_002.yaml
+experiments/configs/FC_003.yaml
+experiments/configs/FC_HARDNEG_001.yaml
+experiments/configs/FC_VIRAL_001.yaml
+experiments/configs/INTERLEAVED_001.yaml
+experiments/configs/INTERLEAVED_EDOS_FIRST_001.yaml           [NEW since prior audit_package]
+experiments/configs/MIX_001.yaml
+experiments/configs/NORMAL_001.yaml
+experiments/configs/generated/ADHOC_ATTACK_20260901T103629856Z.yaml
+experiments/configs/generated/ADHOC_ATTACK_20260909T064827968Z.yaml
+experiments/configs/generated/ADHOC_FC_20260901T103733728Z.yaml
+experiments/final_matrix.yaml                                  [NEW since prior audit_package — did NOT exist in it]
+experiments/match_quality.py                                   [SUBSTANTIALLY CHANGED since prior audit_package — see below]
+experiments/run_experiment.py
+experiments/run_interleaved_experiment.py
+experiments/run_matrix.py
+experiments/summarize_results.py                                [not included in this package — not requested]
+
+=== traffic/ ===
+traffic/generators/__init__.py
+traffic/generators/edos.py
+traffic/generators/flash_crowd.py
+traffic/generators/mixed.py                                    [not included — not requested]
+traffic/generators/viral_shape.py                               [not included — not requested]
+traffic/locustfile.py                                            [not included — not requested]
+traffic/requirements.txt                                        [not included — not requested]
+traffic/run_scenario.py
+traffic/scenarios/edos.yaml
+traffic/scenarios/edos_stealth.yaml                             [NEW since prior audit_package]
+traffic/scenarios/flash_crowd.yaml
+traffic/scenarios/flash_crowd_hard_negative.yaml
+traffic/scenarios/flash_crowd_viral.yaml
+traffic/scenarios/generated/ADHOC_ATTACK_20260901T103629856Z.yaml
+traffic/scenarios/generated/ADHOC_ATTACK_20260909T064827968Z.yaml
+traffic/scenarios/generated/ADHOC_FC_20260901T103733728Z.yaml
+traffic/scenarios/mixed.yaml                                    [CONTENT CHANGED since prior audit_package — edos: block weights fixed]
+traffic/scenarios/normal.yaml
+
+=== feature_engineering/ ===
+feature_engineering/__init__.py                                 [not included — not requested]
+feature_engineering/behaviour_features.py
+feature_engineering/build_features.py
+feature_engineering/collect_metrics.py
+feature_engineering/cost_features.py
+feature_engineering/requirements.txt                            [not included — not requested]
+feature_engineering/scaling_features.py
+feature_engineering/traffic_features.py
+feature_engineering/validate_features.py
+
+=== models/ ===
+models/__init__.py                                               [not included — not requested]
+models/dataset.py
+models/evaluate.py
+models/explain.py
+models/feature_sets.py
+models/predict.py
+models/requirements.txt                                          [not included — not requested]
+models/train_lightgbm.py
+models/train_random_forest.py
+
+=== data/experiments/ ===
+data/experiments/ADHOC_ATTACK_20260901T103629856Z/metadata.json
+data/experiments/ADHOC_FC_20260901T103733728Z/metadata.json
+data/experiments/EDOS_001/metadata.json
+data/experiments/EDOS_002/metadata.json
+data/experiments/EDOS_003/metadata.json
+data/experiments/FC_001/metadata.json
+data/experiments/FC_002/metadata.json
+data/experiments/FC_003/metadata.json
+data/experiments/FC_VIRAL_001/metadata.json
+data/experiments/INTERLEAVED_001/metadata.json
+data/experiments/INTERLEAVED_HAPPY_TEST/metadata.json
+data/experiments/MIX_001/metadata.json
+data/experiments/NORMAL_001/metadata.json
+data/experiments/SMOKE_A_PASS/metadata.json
+data/experiments/SMOKE_C_PASS/metadata.json
+data/experiments/VALIDATION_EDOS_001/match_report.json          [NOT copied — not literally "metadata.json", see CONFIG_SUMMARY.md note]
+data/experiments/VALIDATION_EDOS_001/metadata.json
+data/experiments/VALIDATION_FC_001/metadata.json
+data/experiments/VALIDATION_FC_HARDNEG_001/metadata.json
+data/experiments/matrix_runs/20260917T051516Z.json               [NOT copied — not literally "metadata.json", see CONFIG_SUMMARY.md note]
+
+CONFIRMED: no new experiment_id appears in data/experiments/ that was
+not already present when the prior (now-superseded) audit_package was
+built — i.e. NO live experiments were run between the two package builds
+(consistent with the "do not run experiments" instruction governing both
+sessions). This was checked directly (file listing), not assumed.
+
+CONFIRMED ABSENT: data/experiments/FC_HARDNEG_001/metadata.json does
+NOT exist. experiments/configs/FC_HARDNEG_001.yaml exists (config only);
+no run of it has been persisted. Verified directly this session, not
+assumed from any prior report.
+
+=== data/features/ ===
+(filenames only, for completeness — CSV CONTENTS were NOT copied into
+audit_package/, per the "no raw telemetry / features CSV / large
+generated datasets" instruction)
+data/features/EDOS_001.csv
+data/features/EDOS_002.csv
+data/features/EDOS_003.csv
+data/features/FC_001.csv
+data/features/FC_002.csv
+data/features/FC_003.csv
+data/features/FC_VIRAL_001.csv
+data/features/adhoc/ADHOC_ATTACK_20260901T103629856Z.csv
+data/features/adhoc/ADHOC_FC_20260901T103733728Z.csv
+data/features/baseline/NORMAL_001.csv
+data/features/held_out/INTERLEAVED_001.csv
+data/features/held_out/MIX_001.csv
+data/features/smoke_test_matrix/SMOKE_A_PASS.csv
+data/features/smoke_test_matrix/SMOKE_C_PASS.csv
+data/features/validation_live_gate/VALIDATION_EDOS_001.csv
+data/features/validation_live_gate/VALIDATION_FC_001.csv
+data/features/validation_live_gate/VALIDATION_FC_HARDNEG_001.csv
+No new file here since the prior audit_package build either.
+
+=== docs/ ===
+docs/environment.md                                               [not included — not requested]
+docs/experiment_protocol.md                                       [SUBSTANTIALLY CHANGED since prior audit_package — sections 14-19 added]
+docs/feature_dictionary.md
+docs/research_gap_audit.md
+
+=== tests/ (this package; not part of the original repo-wide inventory, included per this task's explicit request) ===
+tests/experiments/test_final_matrix.py                            [NEW since prior audit_package — did not exist]
+tests/experiments/test_match_quality.py                           [CONTENT CHANGED since prior audit_package — calibration tests added]
+tests/experiments/test_run_interleaved_experiment.py
+tests/experiments/test_run_matrix.py
+tests/traffic/test_scenarios.py    <-- NOTE: the task requested this at
+    "tests/experiments/test_scenarios.py", which does not exist anywhere
+    in the repository. The actual scenario-shape test file lives at
+    tests/traffic/test_scenarios.py and was copied there, preserving its
+    real repo-relative path, rather than silently renamed or omitted.
+    Flagged explicitly in the final report as a request/reality mismatch.

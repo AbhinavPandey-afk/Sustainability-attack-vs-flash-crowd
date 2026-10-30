@@ -6,7 +6,7 @@ export function ArchitecturePage() {
       </div>
       <p className="page-subtitle">
         The real pipeline this dashboard observes and controls — every stage below is implemented and has
-        produced real artifacts on disk (see CLAUDE.md in the repository root for the full specification).
+        produced real artifacts on disk.
       </p>
 
       <div className="arch-diagram">
@@ -62,10 +62,6 @@ export function ArchitecturePage() {
           <p>Reads real artifacts on disk / live cluster checks — triggers real experiment runs, never fabricates a result</p>
         </div>
       </div>
-
-      <p className="note-inline" style={{ marginTop: 20 }}>
-        Full component list, safety constraints, and research hypotheses: see CLAUDE.md in the repository root.
-      </p>
     </div>
   )
 }

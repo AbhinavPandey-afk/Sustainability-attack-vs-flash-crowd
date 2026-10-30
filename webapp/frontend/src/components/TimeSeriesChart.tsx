@@ -1,4 +1,5 @@
 import { CartesianGrid, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { CHART_AXIS_LINE, CHART_AXIS_TEXT, CHART_GRID, CHART_MIXED, CHART_TOOLTIP_BG, CHART_TOOLTIP_BORDER } from '../theme'
 
 interface Series {
   key: string
@@ -42,16 +43,16 @@ export function TimeSeriesChart({
       <div className="chart-title">{title}</div>
       <ResponsiveContainer width="100%" height={height}>
         <LineChart data={data} margin={{ top: 4, right: 10, bottom: 0, left: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1c2636" />
+          <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
           <XAxis
             dataKey={xKey}
-            tick={{ fill: '#6b7a90', fontSize: 11 }}
+            tick={{ fill: CHART_AXIS_TEXT, fontSize: 11 }}
             tickFormatter={(v: number) => `${Math.round(v)}s`}
-            stroke="#253145"
+            stroke={CHART_AXIS_LINE}
           />
-          <YAxis tick={{ fill: '#6b7a90', fontSize: 11 }} stroke="#253145" unit={yUnit} width={48} />
+          <YAxis tick={{ fill: CHART_AXIS_TEXT, fontSize: 11 }} stroke={CHART_AXIS_LINE} unit={yUnit} width={48} />
           <Tooltip
-            contentStyle={{ background: '#131a26', border: '1px solid #253145', borderRadius: 6, fontSize: 12 }}
+            contentStyle={{ background: CHART_TOOLTIP_BG, border: `1px solid ${CHART_TOOLTIP_BORDER}`, borderRadius: 6, fontSize: 12 }}
             labelFormatter={(v) => `t = ${Math.round(Number(v))}s`}
           />
           {series.length > 1 && <Legend wrapperStyle={{ fontSize: 11 }} />}
@@ -70,7 +71,7 @@ export function TimeSeriesChart({
             />
           ))}
           {phaseBoundaries?.map((t) => (
-            <ReferenceLine key={t} x={t} stroke="#c084fc" strokeDasharray="4 4" strokeOpacity={0.6} />
+            <ReferenceLine key={t} x={t} stroke={CHART_MIXED} strokeDasharray="4 4" strokeOpacity={0.6} />
           ))}
         </LineChart>
       </ResponsiveContainer>

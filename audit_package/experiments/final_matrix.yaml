@@ -1,0 +1,487 @@
+# =============================================================================
+# CASCADE — FINAL RESEARCH EXPERIMENT MATRIX
+# =============================================================================
+#
+# This file is a DESIGN DOCUMENT, not a record of completed research runs.
+# It describes the intended final experiment matrix, maps every entry to
+# CASCADE's O1-O4 objectives and H1/H0/H2 hypotheses, and states each
+# entry's implementation/validation status honestly.
+#
+# It does NOT supersede docs/experiment_protocol.md or
+# docs/research_gap_audit.md's existing contamination/shortcut findings —
+# see those files for the full evidentiary detail behind each
+# `data_status` value below. Historical data under data/ and results/
+# remains PROVISIONAL regardless of anything in this file (CLAUDE.md
+# non-negotiable principles #3/#4).
+#
+# Field meanings (every experiment entry uses this schema):
+#   experiment_id       matches experiments/configs/<experiment_id>.yaml's
+#                        experiment.name where a config exists; a stable
+#                        planning identifier otherwise (see `config_file`)
+#   category             one of A-I from this task's Phase 2 list
+#   scenario_type         edos | flash_crowd | mixed | interleaved | normal
+#   scenario_file / config_file   paths, or NOT_YET_CREATED
+#   label                 0 (flash crowd/legitimate) | 1 (EDoS/attack) |
+#                         PER_PHASE (interleaved; see phases)
+#   class_type            positive_class | negative_class | baseline |
+#                         control | matched_pair | interleaved | simultaneous
+#   purpose               one sentence, what this experiment is FOR
+#   objective_mapping     subset of [O1, O2, O3, O4, context_only]
+#   traffic_parameters    users/spawn_rate/think_time, or a pointer for
+#                         phase-based (interleaved) entries
+#   endpoint_weights      task weight distribution, or PER_PHASE
+#   duration_seconds
+#   repetitions           existing (count of already-collected runs) and
+#                         recommended_minimum (see repetition_policy below)
+#   seed_strategy         what the seed does/does not control for THIS entry
+#   status                IMPLEMENTED | PARTIALLY_IMPLEMENTED | NOT_IMPLEMENTED
+#                         (code/config existence — NOT a validity claim)
+#   data_status           whether real data exists and whether it is clean
+#                         (NO_DATA | LIVE_DATA_EXISTS_CLEAN |
+#                         LIVE_DATA_EXISTS_CONTAMINATED |
+#                         LIVE_DATA_EXISTS_PRE_FIX_STALE |
+#                         LIVE_DATA_EXISTS_NOT_YET_FOLDED_INTO_DATASET)
+#   expected_evidence     what a valid run of this entry is supposed to
+#                         produce/demonstrate
+# =============================================================================
+
+manifest:
+  name: "CASCADE Final Research Experiment Matrix"
+  version: "1.0"
+  status: DESIGN_FINALIZED_NOT_EXECUTED
+  source_task: "final research-methodology design session (see docs/experiment_protocol.md's FINAL EXPERIMENT MATRIX section for full narrative)"
+  explicit_non_claims:
+    - "This file does not claim O1, O2, O3, or O4 are demonstrated."
+    - "This file does not claim H1/H0/H2 have been tested."
+    - "No experiment in this file has been (re-)run as part of producing this file."
+    - "Historical data referenced as data_status LIVE_DATA_EXISTS_* remains provisional per docs/experiment_protocol.md."
+
+objectives:
+  O1: "Construct EDoS and flash-crowd traffic with comparable cost/scaling signatures (CLAUDE.md's central premise)"
+  O2: "Identify behavioural features that distinguish the classes despite that scaling/cost similarity"
+  O3: "Build a detector relying on cost-per-request/scaling features, not primarily traffic volume"
+  O4: "Evaluate detection latency, cost-before-detection, TPR, flash-crowd FPR, and class separability"
+
+hypotheses:
+  H1: "A cost+scaling-behaviour detector achieves >=90% EDoS recall while reducing flash-crowd FPR by >=30% vs a volumetric baseline, at comparable request volume."
+  H0: "Cost/scaling behaviour provide no statistically significant improvement over a volume-only baseline."
+  H2: "EDoS produces higher cost-per-request / cost-to-traffic-ratio than flash crowd at comparable request volume."
+  current_status: >
+    NOT YET TESTABLE WITH VALID EVIDENCE. Per docs/research_gap_audit.md,
+    the currently-persisted model's apparent perfect separation is
+    attributed to (a) HPA-carryover-contaminated telemetry in several
+    existing experiments and (b) a since-partially-fixed (not yet
+    re-validated at dataset scale) endpoint-availability shortcut, not to
+    a genuine cost/scaling signal. This manifest exists to define the
+    clean matrix that would need to be run before H1/H0/H2 can be tested
+    honestly — it does not itself constitute that evidence.
+
+repetition_policy:
+  # Full rationale in docs/experiment_protocol.md's REPETITION /
+  # STATISTICAL DESIGN section (Phase 7 of the final-design task).
+  minimum_floor_per_condition: 5
+  minimum_floor_rationale: >
+    Below this, no distributional claim (mean/std/CI) is meaningful --
+    single or duplicate runs can only anecdotally illustrate a signature,
+    not support a statistical comparison. This is a hard floor, not a
+    recommendation.
+  target_for_confirmatory_claims_per_condition: 10
+  target_rationale: >
+    A paired non-parametric test (Wilcoxon signed-rank -- see
+    docs/experiment_protocol.md's statistical design section for why
+    non-parametric is the safer default here) has very limited power
+    below ~8-10 pairs at conventional alpha=0.05. 10 independent
+    repetitions per condition is the smallest number this project
+    considers adequate to report a paired CASCADE-vs-baseline comparison
+    as confirmatory rather than illustrative.
+  existing_project_anchor: >
+    webapp/backend/config.py's PROOF_OF_CONCEPT_EXPERIMENT_THRESHOLD = 20
+    is the dashboard's own pre-existing bar for TOTAL experiment count
+    before any hypothesis verdict leaves INSUFFICIENT_DATA. That is a
+    total-dataset-size heuristic, not a per-condition power calculation,
+    and this manifest does not treat it as equivalent to the per-condition
+    target above -- but a matrix with >=10 repetitions across each of
+    (FC, EDoS, matched-FC, matched-EDoS) already clears 20 total
+    experiments before baselines/interleaved/stealth conditions are even
+    counted, so the two figures are compatible, not contradictory.
+  what_the_seed_controls: >
+    Locust's own random number generator only (search-term choice, exact
+    inter-request think-time draw within [min,max], per-user task
+    selection order among equal-weight repeats). It does NOT control, and
+    repetition (not seed variation alone) is required to average over:
+    Kubernetes pod scheduling/placement jitter, HPA controller sync-loop
+    timing relative to traffic start, Prometheus scrape-interval
+    alignment, Docker Desktop host resource contention (observed directly
+    in docs/experiment_protocol.md's live validation sessions), and
+    network/port-forward timing variance. Changing only the `seed:` field
+    across FC_001/002/003 was previously, incorrectly, treated as
+    sufficient for "independent repeats" -- docs/research_gap_audit.md's
+    own contamination finding (FC_002 inheriting a prior run's replica
+    count) demonstrates that seed alone does not achieve run-to-run
+    independence; the mandatory ReplicaResetter isolation step
+    (feature_engineering/collect_metrics.py) is what makes repeated runs
+    independent with respect to starting state, and it still leaves the
+    environmental variability above uncontrolled.
+
+# =============================================================================
+# EXPERIMENTS
+# =============================================================================
+experiments:
+
+  # ---------------------------------------------------------------------
+  # Category I — Normal / background traffic
+  # ---------------------------------------------------------------------
+  - experiment_id: NORMAL_001
+    category: I_normal_background
+    scenario_type: normal
+    scenario_file: traffic/scenarios/normal.yaml
+    config_file: experiments/configs/NORMAL_001.yaml
+    label: 0
+    class_type: control
+    purpose: "Reference point: what does ordinary, non-surge, non-attack traffic look like. Never used as a training/test sample."
+    objective_mapping: [context_only]
+    traffic_parameters: {users: 10, spawn_rate: 2, think_time_min: 1.0, think_time_max: 4.0}
+    endpoint_weights: {home: 4, search: 4, checkout: 1}
+    duration_seconds: 75
+    repetitions: {existing: 1, recommended_minimum: 1, note: "context-only; not a statistical-comparison condition"}
+    seed_strategy: "single seed (42); repetition not required for this entry's purpose"
+    status: IMPLEMENTED
+    data_status: LIVE_DATA_EXISTS_CLEAN
+    expected_evidence: "Baseline telemetry for visual/dashboard comparison; features written to data/features/baseline/, excluded from every training/PCA/SHAP glob by design."
+
+  # ---------------------------------------------------------------------
+  # Category A — Legitimate flash crowd
+  # ---------------------------------------------------------------------
+  - experiment_id: FC_001
+    category: A_legitimate_flash_crowd
+    scenario_type: flash_crowd
+    scenario_file: traffic/scenarios/flash_crowd.yaml
+    config_file: experiments/configs/FC_001.yaml
+    label: 0
+    class_type: negative_class
+    purpose: "Legitimate demand-surge negative class; reference signature for matched-pair construction (category E)."
+    objective_mapping: [O1, O2]
+    traffic_parameters: {users: 50, spawn_rate: 10, think_time_min: 0.3, think_time_max: 1.5}
+    endpoint_weights: {home: 3, search: 5, checkout: 1}
+    duration_seconds: 75
+    repetitions: {existing: 1, recommended_minimum: 10, note: "see repetition_policy; FC_001/002/003 today are 3 nominal repeats, below both the floor and the target"}
+    seed_strategy: "seed=42; controls Locust RNG only -- see repetition_policy.what_the_seed_controls"
+    status: IMPLEMENTED
+    data_status: LIVE_DATA_EXISTS_CLEAN
+    expected_evidence: "Flash-crowd cost/scaling/behavioural signature from a clean, isolated run. docs/research_gap_audit.md documents this as one of the clean (uncontaminated) runs."
+
+  - experiment_id: FC_002
+    category: A_legitimate_flash_crowd
+    scenario_type: flash_crowd
+    scenario_file: traffic/scenarios/flash_crowd.yaml
+    config_file: experiments/configs/FC_002.yaml
+    label: 0
+    class_type: negative_class
+    purpose: "Nominal repeat of FC_001 (different seed)."
+    objective_mapping: [O1, O2]
+    traffic_parameters: {users: 50, spawn_rate: 10, think_time_min: 0.3, think_time_max: 1.5}
+    endpoint_weights: {home: 3, search: 5, checkout: 1}
+    duration_seconds: 75
+    repetitions: {existing: 1, recommended_minimum: 10}
+    seed_strategy: "seed=43"
+    status: IMPLEMENTED
+    data_status: LIVE_DATA_EXISTS_CONTAMINATED
+    contamination_note: "docs/research_gap_audit.md Part 3: replica_count flat at max (8) from the very first sample -- HPA scale-down carryover from a prior run, not caused by this run's own traffic. Must be re-run (with the now-mandatory ReplicaResetter isolation) before use as evidence."
+    expected_evidence: "Same as FC_001, once re-run cleanly."
+
+  - experiment_id: FC_003
+    category: A_legitimate_flash_crowd
+    scenario_type: flash_crowd
+    scenario_file: traffic/scenarios/flash_crowd.yaml
+    config_file: experiments/configs/FC_003.yaml
+    label: 0
+    class_type: negative_class
+    purpose: "Nominal repeat of FC_001 (different seed)."
+    objective_mapping: [O1, O2]
+    traffic_parameters: {users: 50, spawn_rate: 10, think_time_min: 0.3, think_time_max: 1.5}
+    endpoint_weights: {home: 3, search: 5, checkout: 1}
+    duration_seconds: 75
+    repetitions: {existing: 1, recommended_minimum: 10}
+    seed_strategy: "seed=44"
+    status: IMPLEMENTED
+    data_status: LIVE_DATA_EXISTS_CLEAN
+    expected_evidence: "Same as FC_001."
+
+  - experiment_id: FC_VIRAL_001
+    category: A_legitimate_flash_crowd
+    scenario_type: flash_crowd
+    scenario_file: traffic/scenarios/flash_crowd_viral.yaml
+    config_file: experiments/configs/FC_VIRAL_001.yaml
+    label: 0
+    class_type: negative_class
+    purpose: "Flash crowd with a realistic viral (trickle -> S-curve -> peak -> decay) arrival shape instead of a flat linear ramp -- same browsing behaviour as FC_001, different traffic-arrival realism."
+    objective_mapping: [O1, O2]
+    traffic_parameters: {arrival_shape: "trickle 5u/10s -> 25s ramp -> peak 50u/30s -> 25s decay to floor 10u", spawn_rate: 15}
+    endpoint_weights: {home: 3, search: 5, checkout: 1}
+    duration_seconds: 90
+    repetitions: {existing: 1, recommended_minimum: 5, note: "arrival-shape variant; lower priority than the primary FC_001-003 condition for repetition investment"}
+    seed_strategy: "seed=42"
+    status: IMPLEMENTED
+    data_status: LIVE_DATA_EXISTS_CLEAN
+    expected_evidence: "Confirms behavioural/cost/scaling signature is not an artifact of the specific (unrealistic) flat-ramp arrival pattern."
+
+  # ---------------------------------------------------------------------
+  # Category C — Hard-negative flash crowd
+  # ---------------------------------------------------------------------
+  - experiment_id: FC_HARDNEG_001
+    category: C_hard_negative_flash_crowd
+    scenario_type: flash_crowd
+    scenario_file: traffic/scenarios/flash_crowd_hard_negative.yaml
+    config_file: experiments/configs/FC_HARDNEG_001.yaml
+    label: 0
+    class_type: negative_class
+    purpose: "Legitimate flash crowd with a small, legitimate, minority chance of viewing the expensive /api/generate-report endpoint (e.g. 'view my recommended bundle') -- so 'any request to the expensive endpoint' cannot be a deterministic EDoS-vs-flash-crowd shortcut for the classifier."
+    objective_mapping: [O2]
+    traffic_parameters: {users: 50, spawn_rate: 10, think_time_min: 0.3, think_time_max: 1.5, report_complexity: 30}
+    endpoint_weights: {home: 3, search: 5, checkout: 1, generate_report: 1}
+    duration_seconds: 75
+    repetitions: {existing: 0, recommended_minimum: 10}
+    seed_strategy: "seed=42"
+    status: IMPLEMENTED
+    data_status: NO_DATA
+    data_status_note: "Config exists (experiments/configs/FC_HARDNEG_001.yaml) but no run of it has been persisted to data/experiments/ yet -- confirmed absent from the current data/experiments/ directory listing. Distinct from VALIDATION_FC_HARDNEG_001, a separate already-run live-validation experiment covering similar (but not config-identical, and config-unlocatable) scenario behaviour -- see docs/experiment_protocol.md."
+    expected_evidence: "expensive_endpoint_ratio genuinely non-zero but clearly minority (per the already-observed VALIDATION_FC_HARDNEG_001 result: ~6.8% vs EDoS's ~57%) once this exact config is run."
+
+  # ---------------------------------------------------------------------
+  # Category B — Standard EDoS
+  # ---------------------------------------------------------------------
+  - experiment_id: EDOS_001
+    category: B_standard_edos
+    scenario_type: edos
+    scenario_file: traffic/scenarios/edos.yaml
+    config_file: experiments/configs/EDOS_001.yaml
+    label: 1
+    class_type: positive_class
+    purpose: "Synthetic low-user-count, expensive-endpoint-concentrated EDoS positive class."
+    objective_mapping: [O1, O2, O3]
+    traffic_parameters: {users: 8, spawn_rate: 8, think_time_min: 0.05, think_time_max: 0.2}
+    endpoint_weights: {generate_report: 18, home: 1, search: 1, checkout: 1}
+    duration_seconds: 75
+    repetitions: {existing: 1, recommended_minimum: 10}
+    seed_strategy: "seed=42"
+    status: IMPLEMENTED
+    data_status: LIVE_DATA_EXISTS_CLEAN
+    expected_evidence: "EDoS cost/scaling/behavioural signature from a clean, isolated run."
+
+  - experiment_id: EDOS_002
+    category: B_standard_edos
+    scenario_type: edos
+    scenario_file: traffic/scenarios/edos.yaml
+    config_file: experiments/configs/EDOS_002.yaml
+    label: 1
+    class_type: positive_class
+    purpose: "Nominal repeat of EDOS_001 (different seed)."
+    objective_mapping: [O1, O2, O3]
+    traffic_parameters: {users: 8, spawn_rate: 8, think_time_min: 0.05, think_time_max: 0.2}
+    endpoint_weights: {generate_report: 18, home: 1, search: 1, checkout: 1}
+    duration_seconds: 75
+    repetitions: {existing: 1, recommended_minimum: 10}
+    seed_strategy: "seed=43"
+    status: IMPLEMENTED
+    data_status: LIVE_DATA_EXISTS_CONTAMINATED
+    contamination_note: "docs/research_gap_audit.md Part 3: replica_count flat at max from the first sample -- HPA carryover. Must be re-run cleanly."
+    expected_evidence: "Same as EDOS_001, once re-run cleanly."
+
+  - experiment_id: EDOS_003
+    category: B_standard_edos
+    scenario_type: edos
+    scenario_file: traffic/scenarios/edos.yaml
+    config_file: experiments/configs/EDOS_003.yaml
+    label: 1
+    class_type: positive_class
+    purpose: "Nominal repeat of EDOS_001 (different seed)."
+    objective_mapping: [O1, O2, O3]
+    traffic_parameters: {users: 8, spawn_rate: 8, think_time_min: 0.05, think_time_max: 0.2}
+    endpoint_weights: {generate_report: 18, home: 1, search: 1, checkout: 1}
+    duration_seconds: 75
+    repetitions: {existing: 1, recommended_minimum: 10}
+    seed_strategy: "seed=44"
+    status: IMPLEMENTED
+    data_status: LIVE_DATA_EXISTS_CONTAMINATED
+    contamination_note: "Same contamination pattern as EDOS_002. Must be re-run cleanly."
+    expected_evidence: "Same as EDOS_001, once re-run cleanly."
+
+  # ---------------------------------------------------------------------
+  # Category D — Stealth / below-threshold EDoS
+  # ---------------------------------------------------------------------
+  - experiment_id: EDOS_STEALTH_001
+    category: D_stealth_below_threshold_edos
+    scenario_type: edos
+    scenario_file: traffic/scenarios/edos_stealth.yaml
+    config_file: experiments/configs/EDOS_STEALTH_001.yaml
+    label: 1
+    class_type: positive_class
+    purpose: "EDoS candidate tuned toward a deliberately low request rate (fewer users, longer think-time than EDOS_001), intended to test whether it stays below baselines/rate_limiter.py's CALIBRATED threshold while still producing disproportionate cost/scaling pressure."
+    objective_mapping: [O1, O2, O3, O4]
+    traffic_parameters: {users: 3, spawn_rate: 3, think_time_min: 0.5, think_time_max: 1.5}
+    endpoint_weights: {generate_report: 18, home: 1, search: 1, checkout: 1}
+    duration_seconds: 75
+    repetitions: {existing: 0, recommended_minimum: 10}
+    seed_strategy: "seed=46"
+    status: PARTIALLY_IMPLEMENTED
+    status_note: "Scenario and config infrastructure exist and are testable/runnable. What is NOT implemented: the actual calibrated request-rate threshold to compare against (see calibration_required below) and a completed run confirming the resulting request_rate is in fact below it."
+    calibration_required:
+      what: "baselines/rate_limiter.py::calibrate_threshold(), a percentile (default 95th) of REAL legitimate (label=0) request_rate from an uncontaminated, post-weighted-task-list-fix flash-crowd/normal dataset"
+      why_not_precomputed: "No currently-collected flash-crowd dataset is simultaneously (a) free of the HPA-carryover contamination (docs/research_gap_audit.md Part 3) and (b) collected under the corrected weighted_task_list() generator fix -- computing a threshold from contaminated or pre-fix data would itself be invalid."
+      blocking: true
+    data_status: NO_DATA
+    expected_evidence: "A completed run's observed request_rate compared against a threshold computed from clean baseline data -- CALIBRATION REQUIRED, not assumed, before this can be reported as 'stealth EDoS evades rate-limiting'."
+
+  # ---------------------------------------------------------------------
+  # Category E / F — Matched-signature flash crowd / EDoS
+  # ---------------------------------------------------------------------
+  - experiment_id: MATCHED_SIGNATURE_PAIR_TEMPLATE
+    category: [E_matched_signature_flash_crowd, F_matched_signature_edos]
+    scenario_type: "flash_crowd (reference) + edos (calibrated candidate)"
+    scenario_file: "reference: an existing clean FC config (e.g. FC_001/FC_003); candidate: generated per-attempt via experiments/match_quality.py::apply_candidate_params() on traffic/scenarios/edos.yaml"
+    config_file: NOT_A_SINGLE_STATIC_CONFIG -- see mechanism_status below
+    label: "reference=0, candidate=1 (each individual run keeps its own normal single-class label; the PAIRING, not either run alone, is what 'matched-signature' means)"
+    class_type: matched_pair
+    purpose: "THE central research condition (CLAUDE.md's own framing): an EDoS run and a flash-crowd run whose peak_replica_count/mean_replica_count/total_cost are within tolerance of each other despite very different request volume -- the condition under which O1-O3 can actually be tested."
+    objective_mapping: [O1, O3]
+    traffic_parameters: "reference: FC_001/FC_003's existing parameters (unmodified). Candidate: starts from edos.yaml's users=8/report_complexity=60, then ONLY `users` and `report_complexity` are adjusted by the calibration search -- see experiments/match_quality.py::next_candidate_params()"
+    endpoint_weights: "reference: flash_crowd.yaml's (home:3,search:5,checkout:1). Candidate: edos.yaml's (generate_report:18,home:1,search:1,checkout:1), UNCHANGED by calibration (the search never touches weights -- see match_quality.py module docstring for why)"
+    duration_seconds: "same as the reference run's duration (matched pairs must share duration for a meaningful cost/replica-minute comparison)"
+    repetitions: {existing: 0, recommended_minimum: 5, note: "each matched pair is itself a distinct, expensive-to-produce data point (a full calibration search, not a single run) -- 5 independently-calibrated pairs is the floor for reporting a matched-pair result distributionally rather than as a single case study"}
+    seed_strategy: "reference keeps its own seed. NOTE: the calibration search adjusts users/report_complexity, never seed -- seed is recorded per attempt for provenance only (CalibrationCandidateParams.seed), consistent with repetition_policy's finding that seed does not, by itself, establish independence."
+    mechanism_status:
+      measurement_primitives: IMPLEMENTED
+      measurement_detail: "experiments/match_quality.py::compute_signature()/compare_signatures()/save_match_report() -- tested, and live-verified once (VALIDATION_EDOS_001 vs VALIDATION_FC_001, result NOT_MATCHED, uncalibrated)"
+      calibration_search_loop: IMPLEMENTED
+      calibration_search_detail: "experiments/match_quality.py::calibrate_matched_pair()/next_candidate_params()/apply_candidate_params()/save_calibration_report() -- added this session, unit-tested (tests/experiments/test_match_quality.py) with a fake run_candidate; NOT yet executed against a live cluster. The live run_candidate callable (build a scenario via apply_candidate_params -> run it through experiments/run_experiment.py -> compute_signature() its raw output) is NOT implemented as a standalone script in this session, per the explicit instruction not to run a live calibration campaign."
+    status: PARTIALLY_IMPLEMENTED
+    data_status: NO_DATA
+    leakage_caution: >
+      IMPORTANT, identified during this session's feature-validity audit
+      (Phase 9): matched-signature calibration ONLY adjusts scaling/cost
+      pressure (users, report_complexity) -- it never touches endpoint
+      weights. If the reference flash-crowd run for a matched pair is
+      drawn from the DEFAULT flash_crowd.yaml (generate_report weight
+      structurally 0, per flash_crowd.py's `weights.get("generate_report",
+      0)` default), the resulting pair can still trivially separate on
+      expensive_endpoint_ratio/report_generation_ratio -- a matched
+      SCALING/COST signature does not, by itself, close the behavioural
+      shortcut docs/research_gap_audit.md Part 4 already found on the
+      EDoS side. A methodologically sound matched-pair experiment should
+      use FC_HARDNEG_001 (category C, flash_crowd_hard_negative.yaml) as
+      the reference run, not FC_001/003, specifically so the pairing
+      tests O1 (scaling/cost match) WITHOUT silently reintroducing an O2
+      shortcut through the back door. This manifest records the
+      requirement; it is not itself enforced in code, since
+      calibrate_matched_pair() is reference-signature-agnostic by design
+      (see experiments/match_quality.py) and correctly leaves the choice
+      of reference run to the caller.
+    expected_evidence: "A persisted calibration_report.json (see save_calibration_report()) showing MATCHED status on peak_replica_count/mean_replica_count/total_cost, with request_rate recorded but NOT gating (EDoS is expected to differ there by research design) -- this is the artifact O1 needs before O3 can be tested on genuinely matched data."
+
+  # ---------------------------------------------------------------------
+  # Category G — Interleaved / simultaneous scenarios
+  # ---------------------------------------------------------------------
+  - experiment_id: MIX_001
+    category: G_interleaved
+    scenario_type: mixed
+    scenario_file: traffic/scenarios/mixed.yaml
+    config_file: experiments/configs/MIX_001.yaml
+    label: 1
+    class_type: simultaneous
+    purpose: "Flash-crowd and EDoS Locust User classes running CONCURRENTLY in one process (CLAUDE.md's own 'E3') -- tests whether the detector recognizes attack presence amid simultaneous legitimate load. Label=1 (attack present) for the entire run by design, not inferred."
+    objective_mapping: [O2, O4]
+    traffic_parameters: {combined_users: 58, flash_crowd_users: 50, edos_users: 8, spawn_rate: 18}
+    endpoint_weights: {flash_crowd: {home: 3, search: 5, checkout: 1}, edos: "generate_report:18,home:1,search:1,checkout:1 -- FIXED this session, was generate_report:10,checkout:0 (see docs/experiment_protocol.md's changelog for this session)"}
+    duration_seconds: 75
+    repetitions: {existing: 1, recommended_minimum: 5}
+    seed_strategy: "seed=42"
+    status: IMPLEMENTED
+    data_status: LIVE_DATA_EXISTS_PRE_FIX_STALE
+    data_status_note: "Existing data/experiments/MIX_001 and data/features/held_out/MIX_001.csv were collected BEFORE this session's mixed.yaml weight fix -- the EDoS component of that historical run used the old zero-home/search-weight pattern. Not regenerated by this session (no live runs performed); must be re-run before citing as evidence of the fixed behaviour."
+    expected_evidence: "Held-out evaluation of the trained detector against simultaneous, not-purely-sequential, attack+legitimate traffic."
+
+  - experiment_id: INTERLEAVED_001
+    category: G_interleaved
+    scenario_type: interleaved
+    config_file: experiments/configs/INTERLEAVED_001.yaml
+    label: PER_PHASE
+    class_type: interleaved
+    purpose: "Alternating Flash Crowd -> EDoS -> Flash Crowd -> EDoS phases under one continuous observation window, per-window ground truth from recorded phase start/end timestamps."
+    objective_mapping: [O4]
+    traffic_parameters: {phases: "FC(20s) -> EDoS(20s) -> FC(20s) -> EDoS(20s)"}
+    endpoint_weights: PER_PHASE
+    duration_seconds: 80
+    repetitions: {existing: 1, recommended_minimum: 5}
+    seed_strategy: "seed=42"
+    status: IMPLEMENTED
+    data_status: LIVE_DATA_EXISTS_CONTAMINATED
+    contamination_note: "docs/research_gap_audit.md Part 3: replica_count flat at 8 for the ENTIRE run, all 4 phases. Must be re-run cleanly (the mandatory isolation step now applies to this runner too, at the start of the run only -- internal phase transitions are deliberately not reset, since they are the thing under study)."
+    expected_evidence: "Held-out temporal-transition evaluation, FC-first direction."
+
+  - experiment_id: INTERLEAVED_EDOS_FIRST_001
+    category: G_interleaved
+    scenario_type: interleaved
+    config_file: experiments/configs/INTERLEAVED_EDOS_FIRST_001.yaml
+    label: PER_PHASE
+    class_type: interleaved
+    purpose: "Same mechanism as INTERLEAVED_001, EDoS-FIRST phase order (EDoS -> FC -> EDoS -> FC) -- tests the opposite transition direction, added this session per Phase 6 of the final-design task."
+    objective_mapping: [O4]
+    traffic_parameters: {phases: "EDoS(20s) -> FC(20s) -> EDoS(20s) -> FC(20s)"}
+    endpoint_weights: PER_PHASE
+    duration_seconds: 80
+    repetitions: {existing: 0, recommended_minimum: 5}
+    seed_strategy: "seed=47 (distinct from INTERLEAVED_001's 42, to avoid any accidental experiment_id/seed collision if ever run back-to-back)"
+    status: IMPLEMENTED
+    status_note: "Config-only addition this session -- experiments/run_interleaved_experiment.py itself required NO code change, since its phase loop is already fully generic over phase order/count. Not yet run."
+    data_status: NO_DATA
+    expected_evidence: "Held-out temporal-transition evaluation, EDoS-first direction -- lets O4 analysis distinguish whether transition DIRECTION affects detection robustness, which INTERLEAVED_001 alone cannot answer."
+
+  # ---------------------------------------------------------------------
+  # Category H — Conventional detection baselines
+  # ---------------------------------------------------------------------
+  - experiment_id: BASELINE_RATE_LIMITER
+    category: H_conventional_baseline
+    scenario_type: NOT_APPLICABLE -- evaluates against the same feature dataset, generates no traffic of its own
+    config_file: NOT_APPLICABLE
+    label: NOT_APPLICABLE
+    class_type: baseline
+    purpose: "Conventional percentile-based rate-limiting detector (baselines/rate_limiter.py) -- the CLAUDE.md-mandated comparison point H1 is measured against. Threshold calibrated from label=0 TRAINING data only, never attack or test data."
+    objective_mapping: [O4]
+    traffic_parameters: NOT_APPLICABLE
+    endpoint_weights: NOT_APPLICABLE
+    duration_seconds: NOT_APPLICABLE
+    repetitions: {existing: NOT_APPLICABLE, recommended_minimum: NOT_APPLICABLE, note: "runs once per trained split, not per traffic experiment; repetition here means re-running across the matrix's repeated train/val/test splits (see docs/experiment_protocol.md's statistical design section), not independent traffic generation"}
+    seed_strategy: NOT_APPLICABLE
+    status: IMPLEMENTED
+    data_status: NOT_APPLICABLE
+    expected_evidence: "attack_detected / false_positive_on_flash_crowd / detection_latency / cost_before_detection, computed identically to CASCADE's own evaluation convention (models/evaluate.py) for a fair comparison -- confirmed correctly implemented by docs/research_gap_audit.md Part 8."
+
+  - experiment_id: BASELINE_VOLUMETRIC_DETECTOR
+    category: H_conventional_baseline
+    scenario_type: NOT_APPLICABLE
+    config_file: NOT_APPLICABLE
+    label: NOT_APPLICABLE
+    class_type: baseline
+    purpose: "Rolling z-score volumetric anomaly detector (baselines/volumetric_detector.py), causal (shift(1) before rolling stats) -- second CLAUDE.md-mandated baseline."
+    objective_mapping: [O4]
+    traffic_parameters: NOT_APPLICABLE
+    endpoint_weights: NOT_APPLICABLE
+    duration_seconds: NOT_APPLICABLE
+    repetitions: {existing: NOT_APPLICABLE, recommended_minimum: NOT_APPLICABLE}
+    seed_strategy: NOT_APPLICABLE
+    status: IMPLEMENTED
+    data_status: NOT_APPLICABLE
+    expected_evidence: "TP/TN/FP/FN, TPR/FPR/precision/recall/F1, detection_latency, cost_before_detection -- same fairness guarantee as the rate-limiter baseline."
+
+# =============================================================================
+# EXPLICITLY EXCLUDED FROM THIS MATRIX (not invented as new entries)
+# =============================================================================
+excluded_from_matrix:
+  - id: VALIDATION_EDOS_001 / VALIDATION_FC_001 / VALIDATION_FC_HARDNEG_001
+    reason: "Live-validation runs for the weighted_task_list()/endpoint-shortcut fixes, not official research-matrix data points. Source config YAML not locatable (session-scratchpad path, no longer on disk) -- see audit_package/CONFIG_SUMMARY.md Part C."
+  - id: SMOKE_A_PASS / SMOKE_B_FAIL / SMOKE_C_PASS
+    reason: "CI/reliability smoke-test fixtures for run_matrix.py's failure-isolation logic, not research traffic. Isolated to data/features/smoke_test_matrix/ by design."
+  - id: INTERLEAVED_HAPPY_TEST
+    reason: "Automated pytest fixture output (metadata.json's own git_commit is literally \"fakecommit\"), not a real experiment."
+  - id: ADHOC_ATTACK_* / ADHOC_FC_*
+    reason: "Runtime-generated webapp Attack/Flash-Crowd Simulator demo runs, not part of the official experiment list. The generator function producing new ones (webapp/backend/scenario_builder.py::build_attack_config) was fixed this session (Phase 1) to stop using stale weights; existing historical snapshot files under experiments/configs/generated/ and traffic/scenarios/generated/ were deliberately left unmodified as an honest historical record of what was actually run -- see docs/experiment_protocol.md's changelog for the explicit reasoning."

@@ -2,16 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import { api } from '../api'
 import { fmtNum, fmtPct, fmtSeconds } from '../format'
 import { overlayByElapsedSeconds } from '../overlay'
-import { computeSummaryStats, cumulativeCostSeries } from '../summary'
+import { computeEndpointCounts, computeSummaryStats, cumulativeCostSeries } from '../summary'
 import type { DetectionExplanation, ExperimentConfig, ExperimentResult, RunState, RunStatus, ScenarioType } from '../types'
 import { EndpointDistribution } from './EndpointDistribution'
 import { RunNarrative } from './RunNarrative'
 import { StatTile } from './StatTile'
 import { TimeSeriesChart } from './TimeSeriesChart'
+import { CHART_AMBER, CHART_AXIS_TEXT_STRONG, CHART_EDOS, CHART_ENDPOINT_MEDIUM, CHART_GREEN, CHART_PRIMARY } from '../theme'
 
 const STEPS: RunState[] = ['READY', 'STARTING', 'RUNNING', 'SUMMARIZING', 'COMPLETED']
 
-function Lifecycle({ state }: { state: RunState }) {
+export function Lifecycle({ state }: { state: RunState }) {
   const terminalOverride = state === 'FAILED' || state === 'CANCELLED'
   const idx = STEPS.indexOf(terminalOverride ? 'COMPLETED' : state)
   return (
@@ -161,9 +162,6 @@ export function ExperimentDetail({
                 </span>
               )}
             </div>
-            <p style={{ color: 'var(--text-dim)', fontSize: 13, marginTop: 6, maxWidth: 640 }}>
-              {config?.scenario_purpose}
-            </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="primary" onClick={handleRun} disabled={isRunning || disableRun}>
@@ -173,8 +171,24 @@ export function ExperimentDetail({
           </div>
         </div>
 
+        {result &&
+          (() => {
+            const counts = computeEndpointCounts(result)
+            return (
+              <div className="grid grid-5" style={{ marginTop: 14 }}>
+                <StatTile label="Total Requests" value={fmtNum(counts.totalRequests, 0)} />
+                <StatTile label="Expensive (Report) Requests" value={fmtNum(counts.expensive, 0)} />
+                <StatTile label="Search Requests" value={fmtNum(counts.medium, 0)} />
+                <StatTile label="Home/Checkout Requests" value={fmtNum(counts.cheap, 0)} />
+                <StatTile label="Conversions" value={fmtNum(counts.conversions, 0)} />
+              </div>
+            )
+          })()}
+
+        <p style={{ color: 'var(--text-dim)', fontSize: 13, marginTop: 12, maxWidth: 700 }}>{config?.scenario_purpose}</p>
+
         {config && (
-          <div className="exp-card-meta" style={{ marginTop: 12 }}>
+          <div className="exp-card-meta" style={{ marginTop: 10 }}>
             <span>duration {String(config.experiment.duration_seconds)}s</span>
             <span>seed {String(config.experiment.seed)}</span>
             <span>users {String((config.scenario as Record<string, unknown> | null)?.locust ? (((config.scenario as Record<string, unknown>).locust as Record<string, unknown>).users) : '—')}</span>
@@ -230,22 +244,22 @@ export function ExperimentDetail({
                       title="Request Rate (Locust, req/s) — vs. normal day"
                       data={overlayByElapsedSeconds(baseline!.locust_history, result.locust_history, 'elapsed_seconds', 'Requests/s')}
                       series={[
-                        { key: 'baseline', label: 'Normal day', color: '#6b7a90', dashed: true },
-                        { key: 'current', label: 'This run', color: '#4d9fff' },
+                        { key: 'baseline', label: 'Normal day', color: CHART_AXIS_TEXT_STRONG, dashed: true },
+                        { key: 'current', label: 'This run', color: CHART_PRIMARY },
                       ]}
                     />
                   ) : (
                     <TimeSeriesChart
                       title="Request Rate (Locust, req/s)"
                       data={result.locust_history}
-                      series={[{ key: 'Requests/s', label: 'req/s', color: '#4d9fff' }]}
+                      series={[{ key: 'Requests/s', label: 'req/s', color: CHART_PRIMARY }]}
                       phaseBoundaries={phaseBoundaries}
                     />
                   )}
                   <TimeSeriesChart
                     title="Average Latency (ms, cumulative)"
                     data={result.locust_history}
-                    series={[{ key: 'Total Average Response Time', label: 'avg ms', color: '#a78bfa' }]}
+                    series={[{ key: 'Total Average Response Time', label: 'avg ms', color: CHART_ENDPOINT_MEDIUM }]}
                     phaseBoundaries={phaseBoundaries}
                   />
                   {hasBaseline ? (
@@ -253,15 +267,15 @@ export function ExperimentDetail({
                       title="Replica Count — vs. normal day"
                       data={overlayByElapsedSeconds(baseline!.timeseries, result.timeseries, 'elapsed_seconds', 'replica_count')}
                       series={[
-                        { key: 'baseline', label: 'Normal day', color: '#6b7a90', dashed: true },
-                        { key: 'current', label: 'This run', color: '#fbbf24' },
+                        { key: 'baseline', label: 'Normal day', color: CHART_AXIS_TEXT_STRONG, dashed: true },
+                        { key: 'current', label: 'This run', color: CHART_AMBER },
                       ]}
                     />
                   ) : (
                     <TimeSeriesChart
                       title="Replica Count"
                       data={result.timeseries}
-                      series={[{ key: 'replica_count', label: 'replicas', color: '#fbbf24' }]}
+                      series={[{ key: 'replica_count', label: 'replicas', color: CHART_AMBER }]}
                       phaseBoundaries={phaseBoundaries}
                     />
                   )}
@@ -270,8 +284,8 @@ export function ExperimentDetail({
                       title="CPU Utilization (%) — vs. normal day"
                       data={overlayByElapsedSeconds(baseline!.timeseries, result.timeseries, 'elapsed_seconds', 'cpu_utilization_pct')}
                       series={[
-                        { key: 'baseline', label: 'Normal day', color: '#6b7a90', dashed: true },
-                        { key: 'current', label: 'This run', color: '#fb7185' },
+                        { key: 'baseline', label: 'Normal day', color: CHART_AXIS_TEXT_STRONG, dashed: true },
+                        { key: 'current', label: 'This run', color: CHART_EDOS },
                       ]}
                       yUnit="%"
                     />
@@ -279,7 +293,7 @@ export function ExperimentDetail({
                     <TimeSeriesChart
                       title="CPU Utilization (HPA-reported, % of request)"
                       data={result.timeseries}
-                      series={[{ key: 'cpu_utilization_pct', label: 'CPU %', color: '#fb7185' }]}
+                      series={[{ key: 'cpu_utilization_pct', label: 'CPU %', color: CHART_EDOS }]}
                       phaseBoundaries={phaseBoundaries}
                       yUnit="%"
                     />
@@ -313,7 +327,7 @@ export function ExperimentDetail({
                   <TimeSeriesChart
                     title="Cumulative Cost Over Time (experimental cost units)"
                     data={cumulativeCostSeries(result)}
-                    series={[{ key: 'cumulative_cost', label: 'cumulative cost', color: '#34d399' }]}
+                    series={[{ key: 'cumulative_cost', label: 'cumulative cost', color: CHART_GREEN }]}
                     xKey="elapsed_seconds"
                   />
                 </div>

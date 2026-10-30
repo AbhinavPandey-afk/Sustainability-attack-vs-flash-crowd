@@ -1,0 +1,25 @@
+scenario:
+  name: edos
+  type: edos
+  description: 'Synthetic EDoS: concentrated load on the expensive endpoint, with
+    a small non-zero chance of normal-looking requests'
+locust:
+  users: 2
+  spawn_rate: 2
+  run_time_seconds: 60
+  host: http://localhost:8000
+behavior:
+  think_time_min: 0.05
+  think_time_max: 0.2
+  report_complexity: 30
+  search_terms:
+  - laptop
+  - phone
+  - shoes
+  - book
+  - camera
+  weights:
+    generate_report: 18
+    home: 1
+    search: 1
+    checkout: 1

@@ -54,6 +54,10 @@ def load_experiment_config(experiment_id: str) -> dict | None:
         # Ad-hoc simulator runs (webapp/backend/scenario_builder.py) write here.
         path = EXPERIMENTS_CONFIGS / "generated" / f"{experiment_id}.yaml"
     if not path.exists():
+        # EDOS_MATCHED_E6_001 (E6, matched-signature calibration candidate)
+        # was written under its own pending-review config subdirectory.
+        path = EXPERIMENTS_CONFIGS / "matched_e6_pending_review" / f"{experiment_id}.yaml"
+    if not path.exists():
         return None
     config = yaml.safe_load(path.read_text())
     scenario_type = config["experiment"]["scenario_type"]
@@ -98,15 +102,21 @@ def load_features(experiment_id: str) -> list[dict]:
     # runs are similarly isolated under data/features/adhoc/ (see
     # webapp/backend/main.py's /api/simulator/* routes) so arbitrary
     # user-chosen simulator parameters never perturb the trained model.
-    path = DATA_FEATURES / f"{experiment_id}.csv"
-    if not path.exists():
-        path = DATA_FEATURES / "held_out" / f"{experiment_id}.csv"
-    if not path.exists():
-        path = DATA_FEATURES / "adhoc" / f"{experiment_id}.csv"
-    if not path.exists():
-        # E0 normal/non-attack baseline (NORMAL_001) — see webapp/backend/runner.py.
-        path = DATA_FEATURES / "baseline" / f"{experiment_id}.csv"
-    if not path.exists():
+    # e5_pending_review/matched_e6_pending_review/gen2_pending_review hold
+    # E7-stealth, E6-matched-signature and Gen2-hard-negative repeatability
+    # runs respectively — real measured data, just not yet promoted into
+    # the main train/test split (docs/experiment_protocol.md sections 16, 20).
+    candidates = [
+        DATA_FEATURES / f"{experiment_id}.csv",
+        DATA_FEATURES / "held_out" / f"{experiment_id}.csv",
+        DATA_FEATURES / "adhoc" / f"{experiment_id}.csv",
+        DATA_FEATURES / "baseline" / f"{experiment_id}.csv",
+        DATA_FEATURES / "e5_pending_review" / f"{experiment_id}.csv",
+        DATA_FEATURES / "matched_e6_pending_review" / f"{experiment_id}.csv",
+        DATA_FEATURES / "gen2_pending_review" / f"{experiment_id}.csv",
+    ]
+    path = next((p for p in candidates if p.exists()), None)
+    if path is None:
         return []
     df = pd.read_csv(path)
     return _records_clean(df)
@@ -160,6 +170,19 @@ def load_locust_history(experiment_id: str) -> list[dict]:
     start = combined["Timestamp"].min()
     combined["elapsed_seconds"] = combined["Timestamp"] - start
     return _records_clean(combined)
+
+
+def load_match_report(experiment_id: str) -> dict | None:
+    """The stored match_report.json for a matched-signature calibration
+    candidate (e.g. EDOS_MATCHED_E6_001), written by
+    experiments/match_quality.py::save_calibration_report — real measured
+    axis-by-axis deltas against a specific reference experiment, never
+    recomputed here. None if this experiment was never run through that
+    calibration flow."""
+    path = DATA_EXPERIMENTS / experiment_id / "match_report.json"
+    if not path.exists():
+        return None
+    return json.loads(path.read_text())
 
 
 def list_all_experiment_ids() -> list[str]:

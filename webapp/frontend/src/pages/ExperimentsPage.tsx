@@ -1,4 +1,3 @@
-import { ExperimentCompare } from '../components/ExperimentCompare'
 import { ExperimentDetail } from '../components/ExperimentDetail'
 import { ExperimentGrid } from '../components/ExperimentGrid'
 import type { ExperimentExample } from '../types'
@@ -42,11 +41,6 @@ export function ExperimentsPage({
           />
         </div>
       )}
-
-      <div className="section">
-        <div className="section-title">Compare Two Experiments</div>
-        <ExperimentCompare examples={examples} />
-      </div>
     </div>
   )
 }

@@ -31,9 +31,18 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from app.src.cost import CostModelConfig  # noqa: E402
-from experiments.run_experiment import git_commit  # noqa: E402
+from experiments.run_experiment import check_host_reachable, git_commit  # noqa: E402
 from feature_engineering.build_features import build_features  # noqa: E402
-from feature_engineering.collect_metrics import PrometheusClient, ReplicaSampler, align_raw_dataframe  # noqa: E402
+from feature_engineering.collect_metrics import (  # noqa: E402
+    PrometheusClient,
+    ReplicaResetError,
+    ReplicaResetter,
+    ReplicaSampler,
+    ResetConfig,
+    ResetRetryConfig,
+    align_raw_dataframe,
+    ensure_isolated_with_retry,
+)
 from feature_engineering.validate_features import validate  # noqa: E402
 
 
@@ -70,16 +79,61 @@ def run_interleaved_experiment(
     total_duration = sum(p["duration_seconds"] for p in phases)
 
     replica_cfg = config.get("replica_sampler", {})
+
+    # Mandatory experiment isolation, retried with backoff — see the
+    # matching comment in experiments/run_experiment.py. Applies once,
+    # before phase 0, since an interleaved run's own internal phase
+    # transitions are the thing being studied and must not themselves be
+    # reset; only the run's *start* needs to be isolated from whatever
+    # preceded it.
+    reset_cfg = config.get("reset", {})
+    resetter = ReplicaResetter(
+        namespace=replica_cfg.get("namespace", "cascade"),
+        deployment=replica_cfg.get("deployment", "cascade-app"),
+        hpa=replica_cfg.get("hpa", "cascade-app"),
+    )
+    ensure_isolated_with_retry(resetter, ResetConfig.from_dict(reset_cfg), ResetRetryConfig.from_dict(reset_cfg))
+    check_host_reachable(host)
+
+    # Same Prometheus pre-flight as experiments/run_experiment.py (matrix
+    # -orchestration-hardening session, 2026-09-17) — fail fast, before
+    # any phase's traffic starts, rather than discovering a down
+    # Prometheus only after the full multi-phase run has already
+    # completed. The same PrometheusClient instance is reused for the
+    # real collect_app_metrics() call later.
+    prometheus_url = config.get("prometheus", {}).get("base_url", default_prometheus_url)
+    prom = PrometheusClient(base_url=prometheus_url)
+    prom.check_reachable()
+
     sampler = ReplicaSampler(
         namespace=replica_cfg.get("namespace", "cascade"),
         deployment=replica_cfg.get("deployment", "cascade-app"),
         hpa=replica_cfg.get("hpa", "cascade-app"),
     )
 
+    # Stop-event-capable sampler thread (docs/experiment_protocol.md
+    # §12.2/§13): unlike run_experiment.py's single Popen+poll traffic
+    # call, this function drives traffic through a LOOP of blocking
+    # `subprocess.run(..., check=True)` calls, one per phase, with no
+    # cancellation support and (before this fix) NO exception handling
+    # around that loop at all — a phase's CalledProcessError (e.g. a dead
+    # port-forward tunnel surfacing via Locust's --exit-code-on-error)
+    # propagated with the sampler thread left running, polling the
+    # Kubernetes API, for the rest of total_duration. The fix mirrors
+    # run_experiment.py's (stop the sampler, join it, then re-raise) but
+    # is applied around the phase loop's actual shape, not copied
+    # verbatim — this file's traffic generation has no cancel_event/
+    # RunCancelled concept, so only the new stop-on-failure path is added.
+    sampler_interval_seconds = replica_cfg.get("interval_seconds", 5)
+    sampler_stop_event = threading.Event()
     overall_start = time.time()
     sampler_thread = threading.Thread(
         target=sampler.sample_for,
-        kwargs={"duration_seconds": total_duration, "interval_seconds": replica_cfg.get("interval_seconds", 5)},
+        kwargs={
+            "duration_seconds": total_duration,
+            "interval_seconds": sampler_interval_seconds,
+            "stop_event": sampler_stop_event,
+        },
     )
     sampler_thread.start()
 
@@ -91,34 +145,47 @@ def run_interleaved_experiment(
         shutil.rmtree(staging_raw_dir)
 
     phase_schedule = []
-    for i, phase in enumerate(phases):
-        scenario_file = REPO_ROOT / phase["scenario_file"]
-        phase_output_dir = staging_raw_dir / f"phase_{i}_{phase['scenario_type']}"
-        phase_start = time.time()
-        cmd = [
-            sys.executable, str(REPO_ROOT / "traffic" / "run_scenario.py"), str(scenario_file),
-            "--host", host, "--run-time", f"{phase['duration_seconds']}s",
-            "--output-dir", str(phase_output_dir),
-        ]
-        subprocess.run(cmd, cwd=REPO_ROOT, check=True)
-        phase_end = time.time()
-        phase_schedule.append(
-            {
-                "index": i,
-                "scenario_type": phase["scenario_type"],
-                "scenario_file": phase["scenario_file"],
-                "label": phase["label"],
-                "planned_duration_seconds": phase["duration_seconds"],
-                "start": phase_start,
-                "end": phase_end,
-            }
-        )
+    try:
+        for i, phase in enumerate(phases):
+            scenario_file = REPO_ROOT / phase["scenario_file"]
+            phase_output_dir = staging_raw_dir / f"phase_{i}_{phase['scenario_type']}"
+            phase_start = time.time()
+            cmd = [
+                sys.executable, str(REPO_ROOT / "traffic" / "run_scenario.py"), str(scenario_file),
+                "--host", host, "--run-time", f"{phase['duration_seconds']}s",
+                "--output-dir", str(phase_output_dir),
+            ]
+            subprocess.run(cmd, cwd=REPO_ROOT, check=True)
+            phase_end = time.time()
+            phase_schedule.append(
+                {
+                    "index": i,
+                    "scenario_type": phase["scenario_type"],
+                    "scenario_file": phase["scenario_file"],
+                    "label": phase["label"],
+                    "planned_duration_seconds": phase["duration_seconds"],
+                    "start": phase_start,
+                    "end": phase_end,
+                }
+            )
+    except Exception:
+        # A phase failed partway through — stop the background sampler
+        # immediately rather than letting it keep polling the Kubernetes
+        # API for the rest of total_duration after this run has already
+        # been abandoned. staging_raw_dir is deliberately left in place
+        # (not deleted) as the only diagnostic record of what the failed
+        # run actually did — its ".inprogress" suffix already excludes
+        # it from every glob that reads real experiment data.
+        sampler_stop_event.set()
+        sampler_thread.join(timeout=sampler_interval_seconds + 5)
+        raise
 
     sampler_thread.join()
     overall_end = time.time()
 
-    prometheus_url = config.get("prometheus", {}).get("base_url", default_prometheus_url)
-    prom = PrometheusClient(base_url=prometheus_url)
+    # `prom` (PrometheusClient) was already created and reachability
+    # -checked above, before any phase's traffic started — reused here,
+    # not re-instantiated.
     app_counters = prom.collect_app_metrics(start=overall_start, end=overall_end, step_seconds=5)
     raw = align_raw_dataframe(app_counters, sampler.samples)
 
@@ -142,14 +209,18 @@ def run_interleaved_experiment(
 
     features_dir = output_features_dir or (REPO_ROOT / "data" / "features" / "held_out")
     features_path = features_dir / f"{experiment_id}.csv"
-    features_path.parent.mkdir(parents=True, exist_ok=True)
-    features.to_csv(features_path, index=False)
 
-    # Commit point — see experiments/run_experiment.py.
+    # Commit point — see experiments/run_experiment.py for the full
+    # rationale, including the real bug (features.csv previously written
+    # to the official location BEFORE this rename) fixed by moving the
+    # features write to after it, here and there identically.
     if final_raw_dir.exists():
         shutil.rmtree(final_raw_dir)
     staging_raw_dir.rename(final_raw_dir)
     timeseries_path = final_raw_dir / "timeseries.csv"
+
+    features_path.parent.mkdir(parents=True, exist_ok=True)
+    features.to_csv(features_path, index=False)
 
     metadata = {
         "experiment_id": experiment_id,

@@ -1,0 +1,45 @@
+# Class 0 — Legitimate Flash Crowd, HARD-NEGATIVE variant
+# (docs/research_gap_audit.md Part 6, E4 "Hard-negative Flash Crowd";
+# CLAUDE.md non-negotiable principle #6 — flash crowd is a first-class
+# negative class, not merely "normal traffic").
+#
+# Identical legitimate browsing behaviour to flash_crowd.yaml (same
+# generator, traffic/generators/flash_crowd.py), except a small share of
+# users ALSO view the personalized recommendation report
+# (/api/generate-report) as part of ordinary browsing — e.g. "see my
+# recommended gear bundle" — a plausible legitimate reason a real user
+# might hit the same endpoint an EDoS attack targets.
+#
+# Exists specifically so "any request to /api/generate-report" or a low
+# endpoint_diversity / high expensive_endpoint_ratio window cannot be a
+# deterministic EDoS-vs-flash-crowd shortcut (docs/research_gap_audit.md
+# Part 4) — under this scenario the expensive endpoint is no longer
+# exclusively associated with label=1. This remains label 0 (legitimate):
+# the label describes intent/traffic-generation source, not which
+# endpoint was hit.
+#
+# report_complexity (30) is deliberately lower than edos.yaml's (60) —
+# a legitimate user viewing one recommendation report is a lighter,
+# occasional action, not the sustained, maximal-complexity workload an
+# EDoS attack deliberately repeats.
+scenario:
+  name: flash_crowd_hard_negative
+  type: flash_crowd
+  description: "Legitimate demand surge where some users also view the (expensive) recommendation report"
+
+locust:
+  users: 50
+  spawn_rate: 10
+  run_time_seconds: 60
+  host: "http://localhost:8000"
+
+behavior:
+  think_time_min: 0.3
+  think_time_max: 1.5
+  search_terms: ["laptop", "phone", "shoes", "book", "camera", "headphones", "monitor"]
+  report_complexity: 30
+  weights:
+    home: 3
+    search: 5
+    checkout: 1
+    generate_report: 1

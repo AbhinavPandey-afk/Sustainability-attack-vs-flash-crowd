@@ -22,7 +22,7 @@ export function DashboardPage({
   return (
     <div>
       <div className="page-title">
-        <h2>Dashboard</h2>
+        <h2>Overview</h2>
       </div>
       <p className="page-subtitle">
         {research?.question ??

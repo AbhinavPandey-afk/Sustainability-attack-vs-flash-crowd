@@ -1,0 +1,20 @@
+{
+  "experiment_id": "ADHOC_ATTACK_20260901T103629856Z",
+  "timestamp": "2026-09-01T10:37:03.004860+00:00",
+  "git_commit": "04c8c7f31bcf541d55bd2c6cf4860736f7ba6622",
+  "config_file": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\experiments\\configs\\generated\\ADHOC_ATTACK_20260901T103629856Z.yaml",
+  "seed": 42,
+  "label": 1,
+  "duration_seconds": 30,
+  "host": "http://localhost:8000",
+  "n_raw_samples": 13,
+  "n_feature_rows": 2,
+  "timeseries_path": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\data\\raw\\ADHOC_ATTACK_20260901T103629856Z\\timeseries.csv",
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "not_checked": []
+  },
+  "features_path": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\data\\features\\adhoc\\ADHOC_ATTACK_20260901T103629856Z.csv"
+}

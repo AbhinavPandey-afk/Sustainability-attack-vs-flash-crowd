@@ -26,6 +26,7 @@ from fastapi.responses import FileResponse, StreamingResponse  # noqa: E402
 
 import analytics  # noqa: E402
 import data_access  # noqa: E402
+import live_impact  # noqa: E402
 import prediction  # noqa: E402
 import scenario_builder  # noqa: E402
 import system_status  # noqa: E402
@@ -48,7 +49,15 @@ app = FastAPI(title="CASCADE Dashboard API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        # The app/ storefront demo UI (storefront.py) polls
+        # /api/storefront/impact cross-origin from the target application's
+        # own origin (DEFAULT_APP_HOST) — not the dashboard's own origin.
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -59,6 +68,14 @@ app.add_middleware(
 @app.get("/api/system/status")
 def get_system_status():
     return system_status.full_status(runner_state.is_busy())
+
+
+@app.get("/api/storefront/impact")
+def get_storefront_impact():
+    """Polled by the app/ storefront demo UI's live impact strip
+    (storefront.py / static/store.js) — real replicas/CPU/request-rate
+    reads plus a live replica-minute cost accrual, see live_impact.py."""
+    return live_impact.get_live_impact()
 
 
 @app.get("/api/system/research-question")
@@ -121,6 +138,7 @@ def list_history():
                 "experiment_id": experiment_id,
                 "metadata": metadata,
                 "label": label,
+                "scenario_type": scenario_type,
                 "scenario_label": _scenario_label(scenario_type, label),
                 "summary": {
                     "request_rate": last_row.get("request_rate"),
@@ -157,6 +175,18 @@ def get_result(experiment_id: str):
     }
 
 
+@app.get("/api/experiments/{experiment_id}/match-report")
+def get_match_report(experiment_id: str):
+    """Stored matched-signature calibration report (real measured deltas
+    against a reference experiment), if this experiment was produced
+    through experiments/match_quality.py's calibration flow — e.g.
+    EDOS_MATCHED_E6_001. Never recomputed here."""
+    report = data_access.load_match_report(experiment_id)
+    if report is None:
+        raise HTTPException(404, f"No stored match report for {experiment_id}")
+    return report
+
+
 @app.post("/api/experiments/{experiment_id}/run")
 def start_run(experiment_id: str):
     try:
@@ -183,6 +213,49 @@ def stop_run(experiment_id: str):
 
 
 # -------------------------------------------------------------- simulator --
+
+# NOTE: these fixed-path routes (/api/simulator/run/start, /api/simulator/run/stop)
+# must be registered BEFORE the /api/simulator/{kind}/... routes below —
+# FastAPI/Starlette matches routes in registration order, so a parameterized
+# path declared first would otherwise greedily match "run" as kind and this
+# route would never be reached (a real bug found via live browser testing).
+
+@app.post("/api/simulator/run/start")
+def start_unified_simulator(params: dict = Body(default={})):
+    """Traffic Classification Simulator (unified): one form, one real
+    parameter set — the operator never asserts "this is an attack" or
+    "this is a flash crowd". scenario_builder.build_unified_config derives
+    only a descriptive bookkeeping label from the configured weights; the
+    classification shown to the user always comes from the real trained
+    detector (see GET /api/detection/predict/{experiment_id}) scoring this
+    run's real measured features. Same isolation as the legacy per-kind
+    routes below: features land under data/features/adhoc/, kept out of
+    the trained model's train/test split."""
+    app_status = system_status.check_app()
+    if app_status["status"] == system_status.STATUS_UNAVAILABLE:
+        raise HTTPException(503, f"Live application not reachable — cannot start a real simulation ({app_status['detail']}).")
+
+    experiment_id, config_path = scenario_builder.build_unified_config(params or {})
+
+    try:
+        started = runner_state.start(
+            experiment_id,
+            config_path=config_path,
+            output_features_dir=DATA_FEATURES / "adhoc",
+            skip_retrain=True,
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    if not started:
+        raise HTTPException(409, "Another experiment run is already in progress")
+    return {"experiment_id": experiment_id, "status": "starting"}
+
+
+@app.post("/api/simulator/run/stop")
+def stop_unified_simulator():
+    stopped = runner_state.stop()
+    return {"stopped": stopped}
+
 
 @app.post("/api/simulator/{kind}/start")
 def start_simulator(kind: str, params: dict = Body(default={})):
@@ -282,9 +355,8 @@ def get_hypotheses():
 def get_mixed_evaluation():
     """Evaluation of the already-trained detector under E3 (MIX_001,
     attack + legitimate traffic simultaneously) and E4 (INTERLEAVED_001,
-    alternating windows) — CLAUDE.md section 24's requirement to evaluate
-    with both present, not merely in isolation. See
-    experiments/summarize_results.py::evaluate_held_out and
+    alternating windows) — evaluating with both present, not merely in
+    isolation. See experiments/summarize_results.py::evaluate_held_out and
     docs/experiment_protocol.md section 8."""
     evaluation = data_access.load_results_metrics("mixed_interleaved_evaluation")
     return {"available": evaluation is not None and len(evaluation) > 0, "results": evaluation or {}}

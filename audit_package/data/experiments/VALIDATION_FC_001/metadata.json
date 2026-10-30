@@ -1,0 +1,20 @@
+{
+  "experiment_id": "VALIDATION_FC_001",
+  "timestamp": "2026-09-16T11:13:11.269930+00:00",
+  "git_commit": "635d48c040c9910c71eb9da26b1cf8ff6f29af76",
+  "config_file": "C:\\Users\\abhin\\AppData\\Local\\Temp\\claude\\c--Users-abhin-Sustainability-attack-vs-flash-crowd\\ccaddf56-3aa5-4374-b444-b97735cdf5c0\\scratchpad\\VALIDATION_FC_001.yaml",
+  "seed": 100,
+  "label": 0,
+  "duration_seconds": 60,
+  "host": "http://localhost:8000",
+  "n_raw_samples": 25,
+  "n_feature_rows": 3,
+  "timeseries_path": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\data\\raw\\VALIDATION_FC_001\\timeseries.csv",
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "not_checked": []
+  },
+  "features_path": "data\\features\\validation_live_gate\\VALIDATION_FC_001.csv"
+}

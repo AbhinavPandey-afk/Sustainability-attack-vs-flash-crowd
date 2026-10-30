@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Northbound Outfitters — CASCADE Demo Shop</title>
+  <link rel="stylesheet" href="/static/store.css" />
+</head>
+<body>
+
+  <div id="impact-strip" class="impact-strip">
+    <div class="impact-strip-inner">
+      <span class="impact-badge" id="impact-status">connecting…</span>
+      <span class="impact-item"><strong id="impact-replicas">–</strong> replicas</span>
+      <span class="impact-item"><strong id="impact-cpu">–</strong> CPU</span>
+      <span class="impact-item">
+        <strong id="impact-rps-total">–</strong> req/s
+        <span class="impact-breakdown">
+          (cheap <span id="impact-rps-cheap">–</span> ·
+           medium <span id="impact-rps-medium">–</span> ·
+           expensive <span id="impact-rps-expensive">–</span>)
+        </span>
+      </span>
+      <span class="impact-item">cost/min <strong id="impact-cost-rate">–</strong></span>
+      <span class="impact-item">session cost <strong id="impact-cost-total">–</strong> units</span>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="brand">🏔️ Northbound Outfitters</div>
+    <div class="tagline">CASCADE research testbed — dummy storefront, not a real shop</div>
+  </header>
+
+  <section id="theatre" class="theatre">
+    <div class="theatre-header">
+      <h2>Live traffic &amp; autoscaling</h2>
+      <span id="theatre-banner" class="theatre-banner">reading traffic…</span>
+    </div>
+
+    <div class="theatre-grid">
+      <div class="theatre-col">
+        <h3>Replicas</h3>
+        <div id="pods-row" class="pods-row"></div>
+        <div id="pods-caption" class="muted small"></div>
+      </div>
+
+      <div class="theatre-col">
+        <h3>Requests / sec by endpoint</h3>
+        <div class="meter-row">
+          <span class="meter-label">cheap</span>
+          <div class="meter"><div id="meter-cheap" class="meter-fill cheap"></div></div>
+          <span id="meter-cheap-value" class="meter-value">–</span>
+        </div>
+        <div class="meter-row">
+          <span class="meter-label">medium</span>
+          <div class="meter"><div id="meter-medium" class="meter-fill medium"></div></div>
+          <span id="meter-medium-value" class="meter-value">–</span>
+        </div>
+        <div class="meter-row">
+          <span class="meter-label">expensive</span>
+          <div class="meter"><div id="meter-expensive" class="meter-fill expensive"></div></div>
+          <span id="meter-expensive-value" class="meter-value">–</span>
+        </div>
+      </div>
+
+      <div class="theatre-col">
+        <h3>Live request feed</h3>
+        <div id="traffic-feed" class="traffic-feed"></div>
+      </div>
+    </div>
+
+    <div class="theatre-controls">
+      <label>Duration <input id="sim-duration" type="number" min="10" max="300" value="60" /> s</label>
+      <button id="sim-flash-crowd-btn" type="button" class="btn btn-flash">Simulate flash crowd</button>
+      <button id="sim-attack-btn" type="button" class="btn btn-attack">Simulate EDoS attack</button>
+      <button id="sim-stop-btn" type="button" class="btn btn-stop" disabled>Stop</button>
+      <span id="sim-status" class="status-line"></span>
+    </div>
+    <p class="muted small">
+      These buttons start a real, live traffic scenario against this application
+      (the same Attack/Flash Crowd Simulator the CASCADE dashboard uses) — not a
+      client-side animation. Watch replicas, the meters, and the feed above react to it.
+    </p>
+  </section>
+
+  <main>
+    <section id="products" class="section">
+      <h1>Featured Gear</h1>
+      <div id="product-grid" class="grid"></div>
+    </section>
+
+    <section id="search" class="section">
+      <h2>Search the catalog</h2>
+      <form id="search-form" class="search-form">
+        <input id="search-input" type="text" placeholder="trail, jacket, tent…" autocomplete="off" />
+        <button type="submit">Search</button>
+      </form>
+      <div id="search-status" class="status-line"></div>
+      <div id="search-grid" class="grid"></div>
+    </section>
+
+    <section id="report" class="section">
+      <h2>Personalized bundle recommendations</h2>
+      <p class="muted">
+        Builds a recommendation report from your browsing history. This is the
+        deliberately CPU-intensive endpoint (<code>/api/generate-report</code>) —
+        the one an EDoS attack in this project targets.
+      </p>
+      <label for="complexity-range">Report detail level: <span id="complexity-value">10</span></label>
+      <input id="complexity-range" type="range" min="1" max="100" value="10" />
+      <button id="generate-report-btn" type="button">Generate report</button>
+      <div id="report-status" class="status-line"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    Part of the CASCADE research project (EDoS vs. flash-crowd detection). Dummy data,
+    no real purchases. Traffic generated on this page is real and flows through the same
+    Prometheus/feature-engineering/detector pipeline as scripted experiments.
+  </footer>
+
+  <script>
+    // Where the CASCADE dashboard backend lives, for live impact polling.
+    // Override by serving this page with a different origin if needed.
+    window.CASCADE_IMPACT_API = window.CASCADE_IMPACT_API || "http://localhost:8500";
+  </script>
+  <script src="/static/store.js"></script>
+</body>
+</html>

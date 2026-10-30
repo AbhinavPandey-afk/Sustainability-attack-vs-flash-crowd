@@ -1,0 +1,20 @@
+{
+  "experiment_id": "FC_VIRAL_001",
+  "timestamp": "2026-09-01T11:13:00.577320+00:00",
+  "git_commit": "04c8c7f31bcf541d55bd2c6cf4860736f7ba6622",
+  "config_file": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\experiments\\configs\\FC_VIRAL_001.yaml",
+  "seed": 42,
+  "label": 0,
+  "duration_seconds": 90,
+  "host": "http://localhost:8000",
+  "n_raw_samples": 37,
+  "n_feature_rows": 4,
+  "timeseries_path": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\data\\raw\\FC_VIRAL_001\\timeseries.csv",
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "not_checked": []
+  },
+  "features_path": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\data\\features\\FC_VIRAL_001.csv"
+}

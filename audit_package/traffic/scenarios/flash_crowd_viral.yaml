@@ -1,0 +1,38 @@
+# Class 0 — Legitimate Flash Crowd, viral-event arrival pattern.
+# Same behaviour as flash_crowd.yaml (home/search/checkout browsing,
+# session continuity, realistic conversion) — the only difference is the
+# *arrival* schedule: a trickle -> S-curve ramp -> peak -> decay shape
+# (traffic/generators/viral_shape.py) instead of a flat linear ramp,
+# reproducing how a genuine viral event's traffic actually arrives.
+scenario:
+  name: flash_crowd_viral
+  type: flash_crowd
+  description: "Legitimate demand surge with a viral-event arrival curve"
+
+locust:
+  # users/spawn_rate below are unused once arrival_shape is present (the
+  # LoadTestShape it builds takes over scheduling) — kept for documentation
+  # / as a fallback if arrival_shape is ever removed.
+  users: 50
+  spawn_rate: 10
+  run_time_seconds: 90
+  host: "http://localhost:8000"
+  arrival_shape:
+    trickle_users: 5
+    trickle_seconds: 10
+    ramp_seconds: 25
+    peak_users: 50
+    peak_seconds: 30
+    decay_seconds: 25
+    decay_floor_users: 10
+    ramp_steepness: 10.0
+    spawn_rate: 15
+
+behavior:
+  think_time_min: 0.3
+  think_time_max: 1.5
+  search_terms: ["laptop", "phone", "shoes", "book", "camera", "headphones", "monitor"]
+  weights:
+    home: 3
+    search: 5
+    checkout: 1

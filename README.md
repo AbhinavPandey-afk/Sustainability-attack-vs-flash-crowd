@@ -364,6 +364,100 @@ curl http://localhost:8000/metrics
 curl http://localhost:8000/healthz
 ```
 
+## Web UI: dashboard & storefront demo
+
+Two human-facing layers sit on top of the pipeline above. Neither
+reimplements pipeline logic or fabricates a number — both either call the
+real pipeline code in-process or read/poll real live state.
+
+### Dashboard (`webapp/`)
+
+A read-mostly React + FastAPI control/observation layer over
+`app/`, `traffic/`, `experiments/`, `feature_engineering/`, `models/`, and
+`baselines/` — it imports and calls that pipeline directly
+(`webapp/backend/runner.py`) or reads the artifacts it already writes to
+disk (`webapp/backend/data_access.py`). Every status shown is a live check
+or a read of a real artifact (`system_status.py`), never a hardcoded value.
+
+Run the backend:
+
+```bash
+pip install -r webapp/backend/requirements.txt
+cd webapp/backend
+uvicorn main:app --port 8500
+```
+
+Run the frontend (dev server; proxies `/api/*` to the backend above — see
+`webapp/frontend/vite.config.ts`):
+
+```bash
+cd webapp/frontend
+npm install
+npm run dev
+```
+
+Then open `http://localhost:5173`. Pages:
+
+- **Dashboard** — live system status (Kubernetes/HPA/Prometheus/app
+  reachability), the research question and H1/H0/H2 hypotheses, and the
+  current SUPPORTED / NOT SUPPORTED / INCONCLUSIVE / INSUFFICIENT DATA
+  verdict (`detection.py`) — always capped at INSUFFICIENT DATA below the
+  proof-of-concept data-scale threshold, regardless of which way the
+  numbers point.
+- **Experiments** — every recorded run (presets and ad-hoc), with per-run
+  time series, cost/scaling/behaviour charts, per-endpoint request counts
+  (cheap/medium/expensive/conversions — real deltas of the Prometheus
+  counters sampled at run start/end, see `webapp/frontend/src/summary.ts`'s
+  `computeEndpointCounts`), and SHAP/feature-contribution breakdowns where
+  a trained model exists.
+- **Attack Simulator** / **Flash Crowd Simulator** — start a real,
+  parameterized live run (`scenario_builder.py` builds an ad-hoc
+  scenario+config pair, `runner.py` runs it through the same
+  `experiments/run_experiment.py` path as a preset) against the target
+  app — not a canned/precomputed demo.
+- **Live Monitor** — polls the currently-running experiment's progress.
+- **Dataset Export** — downloads the collected feature dataset as a zip.
+- **Architecture** — the real implemented pipeline, diagrammed.
+
+### Storefront demo UI
+
+A human-facing "dummy shop" skin over the same endpoints above
+(`app/src/storefront.py`), for live demos where a visible target makes
+flash-crowd/EDoS traffic legible — every click calls the real `/api/*`
+endpoints, so it produces the same instrumented traffic as Locust or the
+dashboard's simulators, not a client-side fake. Its own page/asset
+requests are excluded from traffic metrics (see `middleware.py`); only the
+API calls it triggers count.
+
+With the app running on port 8000 and the dashboard backend running on
+port 8500 (see above), open:
+
+```text
+http://localhost:8000/shop
+```
+
+Below the header is a "Live traffic & autoscaling" panel driven entirely by
+real signals polled from the dashboard backend's `/api/storefront/impact`
+endpoint (`webapp/backend/live_impact.py`) — no simulated numbers:
+
+- **Replica pods** — one box per replica (from the live Kubernetes/HPA
+  state), so scale-up/scale-down is visible as it happens. Requires the app
+  actually deployed via `kubernetes/` (k3d) with Prometheus scraping it —
+  outside a cluster this shows "no cluster connected" rather than faking it.
+- **Per-endpoint request-rate meters** (cheap/medium/expensive) and a
+  **live request feed** built from real per-poll deltas of
+  `app_endpoint_requests_total`, so you can see exactly which endpoint
+  traffic is landing on.
+- A descriptive **pattern banner** (quiet / broad surge / concentrated on
+  the expensive endpoint) — a simple threshold on the live
+  `expensive_endpoint_ratio` for this page only, *not* the trained CASCADE
+  model's verdict (that lives in the dashboard's Detection page).
+- **"Simulate flash crowd" / "Simulate EDoS attack" buttons** that start a
+  real live run through the same Attack/Flash Crowd Simulator the dashboard
+  uses (`POST /api/simulator/{kind}/start` on `webapp/backend`) — so an
+  attack demoed here is genuine, instrumented traffic against this app, not
+  a client-side animation.
+
 ## Generate traffic (Phase 4)
 
 Against a running app (standalone, port-forwarded, or otherwise reachable):
@@ -440,6 +534,10 @@ python -m pytest -m live tests/environment/test_live_cluster.py
 ## Safety
 
 This project is a controlled research testbed. All Kubernetes workloads in
-this phase are local, internal-only (ClusterIP), and non-destructive. Later
-phases introduce synthetic EDoS traffic that is explicitly confined to the
-local test application only (see `CLAUDE.md` §36).
+this phase are local, internal-only (ClusterIP), and non-destructive. All
+EDoS/flash-crowd traffic — including runs started from the dashboard's
+Attack/Flash Crowd Simulator pages or the storefront's own "Simulate"
+buttons — targets only `DEFAULT_APP_HOST` (`http://localhost:8000` by
+default) and is duration-bounded (10–300s, clamped server-side in
+`scenario_builder.py`); none of it is capable of reaching a third-party
+host (see `CLAUDE.md` §36).

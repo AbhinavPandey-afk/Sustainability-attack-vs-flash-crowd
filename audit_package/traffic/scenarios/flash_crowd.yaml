@@ -1,0 +1,22 @@
+# Class 0 — Legitimate Flash Crowd (CLAUDE.md section 11).
+# Many simulated users, diverse endpoints, session continuity, plausible
+# conversion. Traffic volume can be high; resource demand is legitimate.
+scenario:
+  name: flash_crowd
+  type: flash_crowd
+  description: "Legitimate demand surge: many users browsing diverse endpoints"
+
+locust:
+  users: 50
+  spawn_rate: 10
+  run_time_seconds: 60
+  host: "http://localhost:8000"
+
+behavior:
+  think_time_min: 0.3
+  think_time_max: 1.5
+  search_terms: ["laptop", "phone", "shoes", "book", "camera", "headphones", "monitor"]
+  weights:
+    home: 3
+    search: 5
+    checkout: 1

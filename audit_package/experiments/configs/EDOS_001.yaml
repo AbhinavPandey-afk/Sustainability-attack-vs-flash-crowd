@@ -1,0 +1,30 @@
+# NOTE ON SCALE: duration_seconds here is short (proof-of-concept / CI-
+# friendly), not the multi-minute-to-hour durations CLAUDE.md's full
+# experiment protocol (sections 13, 25) calls for. Real research
+# conclusions need longer runs and more repetitions — see
+# docs/experiment_protocol.md.
+experiment:
+  name: EDOS_001
+  label: 1
+  scenario_type: edos
+  scenario_file: traffic/scenarios/edos.yaml
+  duration_seconds: 75
+  seed: 42
+
+detector:
+  window_seconds: [20]
+  step_seconds: 20
+
+cost_model:
+  replica_cost_per_minute: 1.0
+  cpu_cost_weight: 0.0
+  memory_cost_weight: 0.0
+
+replica_sampler:
+  interval_seconds: 5
+  namespace: cascade
+  deployment: cascade-app
+  hpa: cascade-app
+
+prometheus:
+  base_url: http://localhost:9090

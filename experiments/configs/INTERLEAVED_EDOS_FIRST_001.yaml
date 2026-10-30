@@ -1,0 +1,68 @@
+# E4 (CLAUDE.md §13) — Interleaved, EDoS-FIRST ordering: EDoS -> Flash
+# Crowd -> EDoS -> Flash Crowd, as opposed to INTERLEAVED_001's
+# Flash Crowd -> EDoS -> Flash Crowd -> EDoS ordering.
+#
+# WHY THIS CONFIG EXISTS: docs/research_gap_audit.md Part 6 lists
+# "Interleaved EDoS->FC->EDoS" (its own "E7") as NOT SUPPORTED because no
+# config with this phase order existed — not because
+# experiments/run_interleaved_experiment.py lacked the capability.
+# run_interleaved_experiment.py's phase loop (`for i, phase in
+# enumerate(phases): ...`) is already fully generic over the `phases`
+# list's order and length; label_for_timestamp() maps each feature
+# window to whichever phase's recorded [start, end) interval contains it,
+# with no assumption about which scenario_type comes first. This session
+# therefore adds ONLY a new config — no change to
+# run_interleaved_experiment.py itself, per the "do not redesign the
+# interleaved architecture" instruction.
+#
+# PURPOSE: tests whether detection remains robust to the EDoS->legitimate
+# transition direction specifically (does a detector primed by an initial
+# attack phase behave differently than one that starts clean?), which
+# INTERLEAVED_001 alone cannot distinguish since it always starts with
+# flash-crowd.
+#
+# Each phase is exactly as long as the feature window (detector.
+# window_seconds below), matching INTERLEAVED_001's design so every
+# feature window falls fully inside one phase.
+experiment:
+  name: INTERLEAVED_EDOS_FIRST_001
+  scenario_type: interleaved
+  seed: 47
+  # Derived: sum of phases[*].duration_seconds below (4 x 20s).
+  duration_seconds: 80
+
+phases:
+  - scenario_type: edos
+    scenario_file: traffic/scenarios/edos.yaml
+    duration_seconds: 20
+    label: 1
+  - scenario_type: flash_crowd
+    scenario_file: traffic/scenarios/flash_crowd.yaml
+    duration_seconds: 20
+    label: 0
+  - scenario_type: edos
+    scenario_file: traffic/scenarios/edos.yaml
+    duration_seconds: 20
+    label: 1
+  - scenario_type: flash_crowd
+    scenario_file: traffic/scenarios/flash_crowd.yaml
+    duration_seconds: 20
+    label: 0
+
+detector:
+  window_seconds: [20]
+  step_seconds: 20
+
+cost_model:
+  replica_cost_per_minute: 1.0
+  cpu_cost_weight: 0.0
+  memory_cost_weight: 0.0
+
+replica_sampler:
+  interval_seconds: 5
+  namespace: cascade
+  deployment: cascade-app
+  hpa: cascade-app
+
+prometheus:
+  base_url: http://localhost:9090

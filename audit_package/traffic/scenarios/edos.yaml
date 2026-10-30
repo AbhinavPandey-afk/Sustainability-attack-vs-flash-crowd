@@ -1,0 +1,47 @@
+# Class 1 — EDoS (CLAUDE.md section 11).
+# Few simulated clients, concentrated on the expensive endpoint, minimal
+# think-time, low (not necessarily zero) conversion. Deliberately kept at
+# a request volume/rate comparable to (not obviously larger than)
+# flash_crowd.yaml — see CLAUDE.md section 12 (Traffic Comparability
+# Requirement); exact volume-matching is tuned per-experiment (see
+# experiments/match_quality.py / docs/experiment_protocol.md's
+# Matched-Signature Protocol section).
+#
+# METHODOLOGY NOTE (docs/research_gap_audit.md Part 4 / P0 fix): earlier
+# versions of this scenario set home/search/checkout weights to exactly
+# 0. Combined with traffic/generators/edos.py not even defining a
+# home/search task, this GUARANTEED search_ratio/cheap_endpoint_ratio/
+# conversion_rate were exactly 0 for every EDoS window — a deterministic
+# label shortcut, not measured behaviour. This project's own real,
+# persisted SHAP output confirmed the trained model was using exactly
+# these three features (plus cpu_growth_rate) as its only non-zero-
+# importance predictors, with every cost/scaling feature at 0 importance.
+# Weights below give EDoS a small, explicit, non-zero chance of normal-
+# looking requests (~4.5% each for home/search/checkout, generate_report
+# still ~86% dominant) — plausible for e.g. a scripted client that isn't
+# perfectly single-purpose — while the expensive workload still clearly
+# dominates and still drives the intended disproportionate cost/scaling
+# pressure. This is a configuration change only; traffic/generators/
+# edos.py supports any weight distribution, including the old all-report
+# one, via this same `weights` block.
+scenario:
+  name: edos
+  type: edos
+  description: "Synthetic EDoS: concentrated load on the expensive endpoint, with a small non-zero chance of normal-looking requests"
+
+locust:
+  users: 8
+  spawn_rate: 8
+  run_time_seconds: 60
+  host: "http://localhost:8000"
+
+behavior:
+  think_time_min: 0.05
+  think_time_max: 0.2
+  report_complexity: 60
+  search_terms: ["laptop", "phone", "shoes", "book", "camera"]
+  weights:
+    generate_report: 18
+    home: 1
+    search: 1
+    checkout: 1

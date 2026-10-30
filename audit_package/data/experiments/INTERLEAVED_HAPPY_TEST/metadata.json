@@ -1,0 +1,42 @@
+{
+  "experiment_id": "INTERLEAVED_HAPPY_TEST",
+  "timestamp": "2026-09-17T05:52:47.375802+00:00",
+  "git_commit": "fakecommit",
+  "config_file": "C:\\Users\\abhin\\AppData\\Local\\Temp\\pytest-of-abhin\\pytest-244\\test_run_interleaved_experimen1\\interleaved_happy.yaml",
+  "seed": 1,
+  "scenario_type": "interleaved",
+  "duration_seconds": 0.06,
+  "host": "http://localhost:8000",
+  "n_raw_samples": 8,
+  "n_feature_rows": 0,
+  "timeseries_path": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\data\\raw\\INTERLEAVED_HAPPY_TEST\\timeseries.csv",
+  "validation": {
+    "ok": false,
+    "errors": [
+      "feature DataFrame is empty"
+    ],
+    "warnings": [],
+    "not_checked": []
+  },
+  "features_path": "C:\\Users\\abhin\\AppData\\Local\\Temp\\pytest-of-abhin\\pytest-244\\test_run_interleaved_experimen1\\features\\INTERLEAVED_HAPPY_TEST.csv",
+  "phases": [
+    {
+      "index": 0,
+      "scenario_type": "flash_crowd",
+      "scenario_file": "traffic/scenarios/flash_crowd.yaml",
+      "label": 0,
+      "planned_duration_seconds": 0.03,
+      "start": 1789624367.196921,
+      "end": 1789624367.1971474
+    },
+    {
+      "index": 1,
+      "scenario_type": "edos",
+      "scenario_file": "traffic/scenarios/edos.yaml",
+      "label": 1,
+      "planned_duration_seconds": 0.03,
+      "start": 1789624367.1971567,
+      "end": 1789624367.1973033
+    }
+  ]
+}

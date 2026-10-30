@@ -1,0 +1,67 @@
+# Class 1 — EDoS, STEALTH / below-threshold variant (CLAUDE.md §13/§20,
+# audit's "E5 Stealth EDoS" concept — see docs/research_gap_audit.md
+# Part 6 and docs/experiment_protocol.md's Stealth EDoS section).
+#
+# PURPOSE: a candidate EDoS traffic profile whose request_rate is
+# deliberately LOWER than edos.yaml's — fewer users AND longer think-time,
+# both reducing request rate independently rather than relying on either
+# alone — while still concentrating on the expensive endpoint and using
+# the same (already-fixed, non-deterministic-shortcut) weight scheme as
+# edos.yaml. The intent is to test whether EDoS traffic can remain below
+# baselines/rate_limiter.py's CALIBRATED threshold while still producing
+# disproportionate cost/scaling pressure.
+#
+# CALIBRATION REQUIRED — READ BEFORE USING THIS SCENARIO AS EVIDENCE:
+# baselines/rate_limiter.py's threshold is NOT a fixed number. It is
+# computed by calibrate_threshold() as a configurable percentile (default
+# 95th) of REAL, LEGITIMATE (label=0) baseline traffic's observed
+# request_rate — see experiments/summarize_results.py's calibration call
+# (`rate_limiter.calibrate_threshold(train_df.loc[train_df["label"]==0,
+# "request_rate"])`). That threshold value depends on which flash-crowd/
+# normal experiments are in the training split, and per
+# docs/research_gap_audit.md, no current flash-crowd dataset is both (a)
+# uncontaminated (free of the HPA-carryover issue) AND (b) collected under
+# the corrected weighted_task_list() traffic-generator fix. Until a clean
+# baseline dataset exists and calibrate_threshold() is actually run
+# against it, THE ACTUAL NUMERIC THRESHOLD THIS SCENARIO WOULD NEED TO
+# STAY UNDER IS UNKNOWN — this scenario's users/think-time were tuned to
+# produce a request rate well below edos.yaml's and below flash_crowd.
+# yaml's by construction, not validated against a real calibrated number.
+# Do not report this scenario as "confirmed below threshold" until that
+# calibration has actually been run and compared.
+#
+# RATIONALE FOR THE SPECIFIC PARAMETER CHANGES (vs edos.yaml):
+#   users: 8 -> 3            fewer concurrent clients issuing requests
+#   think_time: 0.05-0.2s -> 0.5-1.5s   each client waits far longer
+#                             between requests
+# Both dimensions independently reduce aggregate request rate (roughly
+# users / mean_think_time), rather than pushing either to an extreme that
+# would itself look anomalous — reducing only user count while keeping
+# sub-second think-time would still produce request-rate spikes per
+# client; reducing only think-time while keeping 8 users would not lower
+# volume enough to plausibly clear a legitimate-traffic-calibrated
+# threshold. report_complexity is left unchanged from edos.yaml (60) so
+# the PER-REQUEST cost/CPU pressure of the (fewer) requests that do occur
+# is not itself weakened — the stealth property here is about request
+# RATE, not about making each request cheaper.
+scenario:
+  name: edos_stealth
+  type: edos
+  description: "Stealth/below-threshold EDoS candidate: fewer users and longer think-time than edos.yaml, same expensive-endpoint-dominant weights and per-request complexity. See CALIBRATION REQUIRED note above."
+
+locust:
+  users: 3
+  spawn_rate: 3
+  run_time_seconds: 60
+  host: "http://localhost:8000"
+
+behavior:
+  think_time_min: 0.5
+  think_time_max: 1.5
+  report_complexity: 60
+  search_terms: ["laptop", "phone", "shoes", "book", "camera"]
+  weights:
+    generate_report: 18
+    home: 1
+    search: 1
+    checkout: 1

@@ -18,7 +18,7 @@ _TRAFFIC_DIR = Path(__file__).resolve().parent
 if str(_TRAFFIC_DIR) not in sys.path:
     sys.path.insert(0, str(_TRAFFIC_DIR))
 
-from generators import edos, flash_crowd, mixed, viral_shape  # noqa: E402
+from generators import cohort_mixed, edos, flash_crowd, mixed, viral_shape  # noqa: E402
 
 _DEFAULT_SCENARIO = _TRAFFIC_DIR / "scenarios" / "normal.yaml"
 _scenario_path = Path(os.environ.get("CASCADE_SCENARIO", _DEFAULT_SCENARIO))
@@ -38,6 +38,12 @@ if _scenario["type"] == "mixed":
     # E3: expose BOTH User classes at module level — Locust discovers
     # every HttpUser subclass present in the module, not just one.
     FlashCrowdUser, EdosUser = mixed.build_user_classes(_scenario, _config)
+elif _scenario["type"] == "flash_crowd_cohort_mixed":
+    # Gen2 hard-negative: two label=0 cohorts (majority/minority) run
+    # concurrently — same "expose both classes at module level" pattern as
+    # the "mixed" branch above, applied to two flash-crowd cohorts instead
+    # of flash-crowd+EDoS. See traffic/generators/cohort_mixed.py.
+    MajorityCohortUser, MinorityCohortUser = cohort_mixed.build_user_classes(_scenario, _config)
 else:
     _builder = _GENERATORS.get(_scenario["type"])
     if _builder is None:

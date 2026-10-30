@@ -1,0 +1,22 @@
+experiment:
+  name: ADHOC_SIM_20260922T120556965Z
+  label: 0
+  scenario_type: flash_crowd
+  scenario_file: traffic/scenarios/generated/ADHOC_SIM_20260922T120556965Z.yaml
+  duration_seconds: 60
+  seed: 42
+detector:
+  window_seconds:
+  - 20
+  step_seconds: 20
+cost_model:
+  replica_cost_per_minute: 1.0
+  cpu_cost_weight: 0.0
+  memory_cost_weight: 0.0
+replica_sampler:
+  interval_seconds: 5
+  namespace: cascade
+  deployment: cascade-app
+  hpa: cascade-app
+prometheus:
+  base_url: http://localhost:9090

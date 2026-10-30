@@ -1,0 +1,39 @@
+# E4 — Hard-negative Flash Crowd (docs/research_gap_audit.md Part 6;
+# CLAUDE.md non-negotiable principle #6/#10). Legitimate flash-crowd
+# traffic (label=0, unchanged semantics) that also, with small
+# probability, hits the expensive /api/generate-report endpoint —
+# traffic/scenarios/flash_crowd_hard_negative.yaml — so that endpoint
+# alone cannot be a deterministic EDoS-vs-flash-crowd shortcut for the
+# classifier (docs/research_gap_audit.md Part 4). Does not modify
+# flash_crowd.yaml or its existing FC_001-003/FC_VIRAL_001 semantics —
+# this is an additive scenario/config pair.
+#
+# NOTE ON SCALE: like every other config in this directory, this is a
+# short (75s), proof-of-concept-scale run for methodology validation, not
+# the multi-minute/multi-repetition protocol CLAUDE.md sections 13/25
+# call for — see docs/experiment_protocol.md §5.
+experiment:
+  name: FC_HARDNEG_001
+  label: 0
+  scenario_type: flash_crowd
+  scenario_file: traffic/scenarios/flash_crowd_hard_negative.yaml
+  duration_seconds: 75
+  seed: 42
+
+detector:
+  window_seconds: [20]
+  step_seconds: 20
+
+cost_model:
+  replica_cost_per_minute: 1.0
+  cpu_cost_weight: 0.0
+  memory_cost_weight: 0.0
+
+replica_sampler:
+  interval_seconds: 5
+  namespace: cascade
+  deployment: cascade-app
+  hpa: cascade-app
+
+prometheus:
+  base_url: http://localhost:9090

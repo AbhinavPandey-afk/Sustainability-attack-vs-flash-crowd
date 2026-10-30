@@ -1,0 +1,58 @@
+{
+  "experiment_id": "INTERLEAVED_001",
+  "timestamp": "2026-09-01T11:15:48.812841+00:00",
+  "git_commit": "04c8c7f31bcf541d55bd2c6cf4860736f7ba6622",
+  "config_file": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\experiments\\configs\\INTERLEAVED_001.yaml",
+  "seed": 42,
+  "scenario_type": "interleaved",
+  "duration_seconds": 80,
+  "host": "http://localhost:8000",
+  "n_raw_samples": 34,
+  "n_feature_rows": 4,
+  "timeseries_path": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\data\\raw\\INTERLEAVED_001\\timeseries.csv",
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "not_checked": []
+  },
+  "features_path": "C:\\Users\\abhin\\Sustainability-attack-vs-flash-crowd\\data\\features\\held_out\\INTERLEAVED_001.csv",
+  "phases": [
+    {
+      "index": 0,
+      "scenario_type": "flash_crowd",
+      "scenario_file": "traffic/scenarios/flash_crowd.yaml",
+      "label": 0,
+      "planned_duration_seconds": 20,
+      "start": 1788261259.7933486,
+      "end": 1788261282.8208065
+    },
+    {
+      "index": 1,
+      "scenario_type": "edos",
+      "scenario_file": "traffic/scenarios/edos.yaml",
+      "label": 1,
+      "planned_duration_seconds": 20,
+      "start": 1788261282.8209078,
+      "end": 1788261304.1657891
+    },
+    {
+      "index": 2,
+      "scenario_type": "flash_crowd",
+      "scenario_file": "traffic/scenarios/flash_crowd.yaml",
+      "label": 0,
+      "planned_duration_seconds": 20,
+      "start": 1788261304.1658669,
+      "end": 1788261325.3122387
+    },
+    {
+      "index": 3,
+      "scenario_type": "edos",
+      "scenario_file": "traffic/scenarios/edos.yaml",
+      "label": 1,
+      "planned_duration_seconds": 20,
+      "start": 1788261325.3122818,
+      "end": 1788261346.4049573
+    }
+  ]
+}
